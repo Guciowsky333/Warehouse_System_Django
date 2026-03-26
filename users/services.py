@@ -43,9 +43,30 @@ def create_custom_user(validated_data:dict) -> dict:
     )
 
     return {
-        "message":"User created successfully",
         "username": username,
         "password": password,
+    }
+
+
+
+def reset_password(username:str) -> dict:
+    """This function take a username and check if he exists and
+     then change his password to a new and return it."""
+
+    user = CustomUser.objects.get(username=username)
+
+    #check if the user exists
+    if not user:
+        raise ValueError("User not found")
+
+    # generating and set up new password
+    new_password = generate_password()
+    user.set_password(new_password)
+    user.save()
+
+    return {
+        "username": user.username,
+        "password": new_password,
     }
 
 

@@ -15,3 +15,4 @@ class CustomUserSerializer(serializers.ModelSerializer):
         if not value.isalpha():
             raise serializers.ValidationError("Last name must contain only letters")
         return value
+
