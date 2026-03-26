@@ -144,3 +144,7 @@ def test_create_user_by_not_manager(test_warehouseman):
 
     response = client.post('/api/users/create/', {}, format='json')
     assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+
+#
