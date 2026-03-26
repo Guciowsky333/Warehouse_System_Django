@@ -9,30 +9,30 @@ from rest_framework.test import APIClient
 @pytest.fixture
 def test_user(db):
     return CustomUser.objects.create_user(
-        username="test_username",
-        password="test_password",
-        first_name="test_first_name",
-        last_name="test_last_name",
-        role="test_role",
+        username="test_username1",
+        password="test_password1",
+        first_name="test_first_name1",
+        last_name="test_last_name1",
+        role="test_role1",
     )
 
 @pytest.fixture
 def test_manager(db):
     return CustomUser.objects.create_user(
-        username="test_username",
-        password="test_password",
-        first_name="test_first_name",
-        last_name="test_last_name",
+        username="test_username2",
+        password="test_password2",
+        first_name="test_first_name2",
+        last_name="test_last_name2",
         role="manager",
     )
 
 @pytest.fixture
 def test_warehouseman(db):
     return CustomUser.objects.create_user(
-        username="test_username",
-        password="test_password",
-        first_name="test_first_name",
-        last_name="test_last_name",
+        username="test_username3",
+        password="test_password3",
+        first_name="test_first_name3",
+        last_name="test_last_name3",
         role="warehouseman",
     )
 
@@ -45,7 +45,7 @@ def test_warehouseman(db):
 @pytest.mark.parametrize(
     'payload, expected_status', [
         #correct credentials
-        ({'username': 'test_username', 'password':'test_password'}, status.HTTP_200_OK),
+        ({'username': 'test_username1', 'password':'test_password1'}, status.HTTP_200_OK),
         #incorrect credentials
         ({'username': 'wrong_username', 'password':'wrong_password'}, status.HTTP_401_UNAUTHORIZED),
     ]
@@ -67,8 +67,8 @@ def test_obtain_token(payload, expected_status, test_user):
 def test_refresh_token_with_valid_token(test_user):
     client = APIClient()
     body = {
-        'username': 'test_username',
-        'password': 'test_password',
+        'username': 'test_username1',
+        'password': 'test_password1',
     }
 
     #first we obtain refresh token on /api/users/token/ and then check if it works correctly
@@ -91,7 +91,7 @@ def test_refresh_token_with_invalid_token():
 
 
 
-#test for /api/create_user/
+#test for /api/create/
 @pytest.mark.parametrize(
     'first_name, last_name, role, expected_status', [
 
@@ -139,6 +139,9 @@ def test_create_user_requires_authentication():
 
 
 def test_create_user_by_not_manager(test_warehouseman):
+    """ Checking if the permission IsManager work correctly and block access
+        user who is not a manager"""
+
     client = APIClient()
     client.force_authenticate(test_warehouseman)
 
@@ -147,4 +150,47 @@ def test_create_user_by_not_manager(test_warehouseman):
 
 
 
-#
+
+#test for /api/reset_password/
+@pytest.mark.parametrize(
+    'username, expected_message, expected_status', [
+        # exist user
+        ('test_username3','Password reset successfully', status.HTTP_200_OK),
+
+        # not exist user
+        ('wrong_username','User not found', status.HTTP_404_NOT_FOUND)
+    ]
+)
+
+def test_ResetPasswordView(username,expected_message, expected_status, test_manager, test_warehouseman):
+    client = APIClient()
+    client.force_authenticate(test_manager)
+
+    response = client.patch('/api/users/reset_password/', {'username': username}, format='json')
+
+    assert response.status_code == expected_status
+    assert response.data['message'] == expected_message
+
+
+    # checking if user's password was changed into a new one
+    if expected_status == status.HTTP_200_OK:
+        test_warehouseman.refresh_from_db()
+        new_password = response.data['new_password']
+        assert test_warehouseman.check_password(new_password) is True
+
+def test_reset_password_requires_authentication():
+    client = APIClient()
+    response = client.patch('/api/users/reset_password/', {}, format='json')
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+
+def test_reset_password_by_not_manager(test_warehouseman):
+    """ Checking if the permission IsManager work correctly and block access
+        user who is not a manager"""
+
+    client = APIClient()
+    client.force_authenticate(test_warehouseman)
+    response = client.patch('/api/users/reset_password/', {}, format='json')
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN

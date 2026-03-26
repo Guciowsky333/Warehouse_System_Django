@@ -53,7 +53,7 @@ def reset_password(username:str) -> dict:
     """This function take a username and check if he exists and
      then change his password to a new and return it."""
 
-    user = CustomUser.objects.get(username=username)
+    user = CustomUser.objects.filter(username=username).first()
 
     #check if the user exists
     if not user:
@@ -66,7 +66,7 @@ def reset_password(username:str) -> dict:
 
     return {
         "username": user.username,
-        "password": new_password,
+        "new_password": new_password,
     }
 
 
