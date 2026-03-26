@@ -19,7 +19,7 @@ def generate_password() ->str:
     return password
 
 
-def create_CustomUser(validated_data:dict) -> dict:
+def create_custom_user(validated_data:dict) -> dict:
     """ This function take a validated data from serializer and generate
     username and password for the user and then create a CustomUser object with this data.
     Returns the username and the password in response only one time """
