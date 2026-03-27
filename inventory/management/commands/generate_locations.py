@@ -6,7 +6,7 @@ from inventory.models import Location
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        ''' This command generates all necessary locations throughout the warehouse.'''
+        """ This command generates all necessary locations throughout the warehouse."""
 
         names = ['A', 'B', 'C', 'D', 'E', 'F']
 

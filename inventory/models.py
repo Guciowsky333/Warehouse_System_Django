@@ -11,8 +11,8 @@ class Location(models.Model):
 
     @property
     def total_weight(self):
-        ''' This method returns the total weight of this location.
-        This will be useful for checking if the location is too heavy. Maximum weight is 800 kg.'''
+        """This method returns the total weight of this location.
+        This will be useful for checking if the location is too heavy. Maximum weight is 800 kg."""
 
         result = self.components.aggregate(total_weight=Sum('weight'))
         return result['total_weight'] or 0
@@ -30,5 +30,23 @@ class Component(models.Model):
 
     def __str__(self):
         return self.code
+
+class ReleasedComponent(models.Model):
+    """ This model represents a components that has been released from the warehouse to a production.
+    Production have 4 main departments and when someone releasing component they have to provided department
+    where this component should be released. This will be useful to track how many component are currently at certain department."""
+    DEPARTMENTS = {
+        "5000":"5000",
+        "5500":"5500",
+        "5800":"5800",
+        "6000":"6000",
+    }
+
+    code = models.CharField(max_length=10)
+    unique_code = models.CharField(max_length=15, unique=True)
+    weight = models.FloatField()
+    quantity = models.IntegerField()
+    department = models.CharField(max_length=4, choices=DEPARTMENTS)
+
 
 

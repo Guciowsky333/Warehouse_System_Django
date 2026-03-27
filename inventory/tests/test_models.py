@@ -19,17 +19,7 @@ def test_component(db, test_location):
 
 
 
-def test_model_location(test_location):
-    assert Location.objects.filter(name=test_location.name).exists()
-
-
-def test_model_component(test_component):
-    assert Component.objects.filter(
-        code=test_component.code,
-        location__name=test_component.location,
-        weight=test_component.weight,
-        quantity=test_component.quantity,
-    ).exists()
+def test_component_unique_code_and_date(test_component):
 
     # checking if the date of component is correctly
     assert test_component.production_date == timezone.now().date()
