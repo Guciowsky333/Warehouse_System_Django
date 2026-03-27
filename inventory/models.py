@@ -15,6 +15,8 @@ class Location(models.Model):
         This will be useful for checking if the location is too heavy. Maximum weight is 800 kg."""
 
         result = self.components.aggregate(total_weight=Sum('weight'))
+
+        # if location is empty we return 0 kg
         return result['total_weight'] or 0
 
 
@@ -33,8 +35,9 @@ class Component(models.Model):
 
 class ReleasedComponent(models.Model):
     """ This model represents a components that has been released from the warehouse to a production.
-    Production have 4 main departments and when someone releasing component they have to provided department
+    Production have 4 main departments (5000, 5500, 5800, 6000) and when someone releasing component they have to provided department
     where this component should be released. This will be useful to track how many component are currently at certain department."""
+
     DEPARTMENTS = {
         "5000":"5000",
         "5500":"5500",
