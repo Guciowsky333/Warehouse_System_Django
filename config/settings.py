@@ -44,6 +44,7 @@ INSTALLED_APPS = [
 
     #new
     'users',
+    'inventory',
 ]
 
 MIDDLEWARE = [
