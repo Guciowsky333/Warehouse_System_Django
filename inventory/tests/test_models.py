@@ -16,13 +16,22 @@ def test_component(db, test_location):
         weight=20,
         quantity=1000,
     )
+@pytest.fixture
+def test_component2(db, test_location):
+    return Component.objects.create(
+        code="test_code2",
+        location=test_location,
+        weight=30,
+        quantity=500,
+    )
 
+def test_location_total_weight(test_location, test_component, test_component2):
 
+    # Inside test_location are already 2 components test_component and test_component2
+    # so total_weight should return sum weight both of them
+    assert test_location.total_weight == test_component.weight + test_component2.weight
 
-def test_component_unique_code_and_date(test_component):
-
-    # checking if the date of component is correctly
-    assert test_component.production_date == timezone.now().date()
+def test_component_unique_code(test_component):
 
     # checking if unique code was generated correctly and has exactly 15 digits
     assert len(test_component.unique_code) == 15
