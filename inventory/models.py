@@ -8,8 +8,12 @@ class Location(models.Model):
 
     def __str__(self):
         return self.name
+
     @property
     def total_weight(self):
+        ''' This method returns the total weight of this location.
+        This will be useful for checking if the location is too heavy. Maximum weight is 800 kg.'''
+
         result = self.components.aggregate(total_weight=Sum('weight'))
         return result['total_weight'] or 0
 
