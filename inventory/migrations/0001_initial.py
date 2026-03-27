@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('code', models.CharField(max_length=10)),
-                ('unique_code', models.CharField(default=inventory.services.generate_unique_code, max_length=15, unique=True)),
+                ('unique_code', models.CharField(default=inventory.utils.generate_unique_code, max_length=15, unique=True)),
                 ('weight', models.FloatField()),
                 ('quantity', models.IntegerField()),
                 ('production_date', models.DateField(auto_now_add=True)),

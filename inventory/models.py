@@ -1,5 +1,5 @@
 from django.db import models
-from inventory.services import generate_unique_code
+from inventory.utils import generate_unique_code
 from django.db.models import Sum
 
 # Create your models here.

@@ -1,19 +1,32 @@
 import secrets
 import string
-
-def generate_unique_code():
-    """This function generates a unique code
-    with 15 numbers for each component"""
-
-    from inventory.models import Component
-    from inventory.models import ReleasedComponent
-
-    while True:
-        unique_code = ''.join(secrets.choice(string.digits) for _ in range(15))
-
-        # checking if component model or ReleasedComponent model with the same unique code already exist
-        if not Component.objects.filter(unique_code=unique_code).exists() and not ReleasedComponent.objects.filter(unique_code=unique_code).exists():
-            return unique_code
+from inventory.models import Component, Location
 
 
 
+def change_location(unique_code, location):
+
+
+    component = Component.objects.filter(unique_code=unique_code).first()
+    location = Location.objects.filter(name=location).first()
+
+    # checking if component with provided unique code exists
+    if not component:
+        raise ValueError(f'Component with unique code {unique_code} not found')
+
+    # checking if provided location exist at warehouse
+    if not location:
+        raise ValueError(f'Location {location} not found')
+
+    # checking if location don't exceed max weight of location 800 kg
+    if location.total_weight + component.weight > 800 :
+        raise ValueError(f'The location {location} already weighs'
+                         f' {location.total_weight} kg, you can"t add another {component.weight} kg.Max weight of one location is 800 kg ')
+
+    # changing location of the component to a new one
+    component.location = location
+    component.save()
+
+    return {
+        "message":"Changed location successfully",
+    }
