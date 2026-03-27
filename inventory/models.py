@@ -48,5 +48,8 @@ class ReleasedComponent(models.Model):
     quantity = models.IntegerField()
     department = models.CharField(max_length=4, choices=DEPARTMENTS)
 
+    def __str__(self):
+        return self.code
+
 
 
