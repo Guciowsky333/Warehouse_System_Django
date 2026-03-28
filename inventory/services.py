@@ -2,6 +2,7 @@ import secrets
 import string
 from inventory.models import Component, Location
 from rest_framework.exceptions import NotFound
+from utils import validate_unique_code
 
 
 
@@ -35,3 +36,21 @@ def change_location(unique_code, location):
     return {
         "message":"Changed location successfully",
     }
+
+
+def release_component(unique_code, department):
+
+    # Checking if user provided unique code and department
+    if not unique_code or not department:
+        raise ValueError('Unique Code and Department are required.')
+
+    allow_departments = ['5000','5500','5800','6000']
+
+    department = str(department)
+    if department not in allow_departments:
+        raise ValueError(f'Department {department} is not exists')
+
+    component = Component.objects.filter(unique_code=unique_code).first()
+    if not component:
+        raise NotFound(f'Component with unique code {unique_code} not found')
+
