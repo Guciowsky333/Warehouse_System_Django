@@ -91,7 +91,7 @@ def test_refresh_token_with_invalid_token():
 
 
 
-#test for /api/create/
+#test for /api/users/create/
 @pytest.mark.parametrize(
     'first_name, last_name, role, expected_status', [
 
