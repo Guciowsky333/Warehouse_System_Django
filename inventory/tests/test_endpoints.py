@@ -43,6 +43,15 @@ def test_component2(db, test_location):
         weight=25,
         quantity=500,
     )
+@pytest.fixture
+def test_released_component(db):
+    return ReleasedComponent.objects.create(
+        code="test_released_component",
+        unique_code="test_released_unique_code",
+        department="test_department",
+        weight=20,
+        quantity=1000,
+    )
 
 # test for /api/inventory/change_location/
 @pytest.mark.parametrize(
@@ -54,12 +63,14 @@ def test_component2(db, test_location):
         ({'unique_code':'wrong_unique_code', 'location':'test_location'}, status.HTTP_404_NOT_FOUND),
         # User provided location that dont exist
         ({'unique_code':'test_unique_code', 'location':'wrong_location'}, status.HTTP_404_NOT_FOUND),
+        # User provided unique code that has been already released to production
+        ({'unique_code':'test_released_unique_code', 'location':'wrong_location'}, status.HTTP_400_BAD_REQUEST),
         # Appropriate data
         ({'unique_code':'test_unique_code', 'location':'test_location'}, status.HTTP_200_OK),
     ]
 )
 
-def test_ChangeLocationView(payload, expected_status, test_component, test_location, test_user):
+def test_ChangeLocationView(payload, expected_status, test_component, test_location, test_user, test_released_component):
     client = APIClient()
     client.force_authenticate(test_user)
 

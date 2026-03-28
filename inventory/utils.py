@@ -23,7 +23,7 @@ def validate_unique_code(unique_code):
     """This function validates a unique code
     checking whether provided unique code has been released from warehouse,
     and now it is at the production (if yes return a message with special status "4"
-    means that this component has been already released form warehouse).Then checking
+    means that this component has been already released from warehouse).Then checking
     whether component with this unique code exist at the warehouse (if yes return this component)."""
 
     from inventory.models import Component, ReleasedComponent
