@@ -1,3 +1,5 @@
+from platform import android_ver
+
 import pytest
 from inventory.models import Location, Component, ReleasedComponent
 from inventory.tests.test_models import test_component_unique_code
@@ -144,7 +146,9 @@ def test_CheckLocationView(location, expected_status, test_location, test_user):
     """First we are creating 3 components with our location to check if endpoint will return them to us in appropriate way.
     The first one and the second will be with the same code so we expect that quantity of components with the same code
     will be totaled, and they will be return as a one code with totaled quantity.
-    So the endpoint should return 2 components, the first and second as one and the third with different code"""
+    So the endpoint should return 2 components, the first and second as one and the third with different code,
+    Each component is a 1 box so if we have two components with the same code endpoint also should return total_boxes of that code as 2
+    """
 
     client = APIClient()
     client.force_authenticate(test_user)
@@ -185,12 +189,19 @@ def test_CheckLocationView(location, expected_status, test_location, test_user):
         assert len(sorted_components) == 2
         assert message == f'All components on location {location}'
 
-        # The first element should be component_3 with code 15016812 because it has more quantity 2000
+        # The first element should be component_3 with code 15016812 because it has more quantity than second element
+        # The first element also should contain total_boxes as 1 because we assigned only one component with code 15016812 to our location
+
         # The second element should be connected component_1 and component_2 with the same code 15016610
+        # The second element should contain total_boxes as 2 because we assigned 2 components with the same code 15016610 to our location
         first_element, second_element = sorted_components
 
+
         assert first_element['code'] == '15016812' and first_element['total_quantity'] == component_3.quantity
+        assert first_element['total_boxes'] == 1
+
         assert second_element['code'] == '15016610' and second_element['total_quantity'] == component_1.quantity + component_2.quantity
+        assert second_element['total_boxes'] == 2
 
 
 def test_CheckLocationView_requires_authentication():

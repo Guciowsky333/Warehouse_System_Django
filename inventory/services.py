@@ -3,7 +3,7 @@ import string
 from inventory.models import Component, Location, ReleasedComponent
 from rest_framework.exceptions import NotFound
 from inventory.utils import validate_unique_code
-from django.db.models import Sum
+from django.db.models import Sum, Count
 from django.db import transaction
 
 
@@ -25,6 +25,7 @@ def change_location(unique_code, location):
         component = validate_unique_code(unique_code)
 
         location = Location.objects.filter(name=location).first()
+
 
 
 
@@ -99,7 +100,10 @@ def check_location(location):
 
     # We are taking all components from provided location
     # then group by code and count total_quantity for each code.Components are order by total_quantity descending
-    components = location.components.all().values('code').annotate(total_quantity=Sum('quantity')).order_by('-total_quantity')
+    components = location.components.all().values('code').annotate(
+        total_boxes=Count('id'),
+        total_quantity=Sum('quantity')
+    ).order_by('-total_quantity')
 
     return components
 

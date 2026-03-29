@@ -23,6 +23,8 @@ class Location(models.Model):
 
 
 class Component(models.Model):
+    """Each component represent one box at the warehouse with some quantity of this code inside."""
+
     code = models.CharField(max_length=10)
     unique_code = models.CharField(max_length=15, unique=True, default=generate_unique_code)
     location = models.ForeignKey(Location, on_delete=models.CASCADE, related_name='components')
