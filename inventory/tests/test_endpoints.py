@@ -128,5 +128,72 @@ def test_ReleasedComponentView_requires_authentication():
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
+# Test for /api/inventory/check_location/
+@pytest.mark.parametrize(
+    'location, expected_status', [
+        # Empty location
+        ('', status.HTTP_400_BAD_REQUEST),
+        # Not exist location
+        ('wrong_location', status.HTTP_404_NOT_FOUND),
+        # Appropriate data
+        ('test_location', status.HTTP_200_OK),
+    ]
+)
+
+def test_CheckLocationView(location, expected_status, test_location, test_user):
+    """First we are creating 3 components with our location to check if endpoint will return them to us in appropriate way.
+    The first one and the second will be with the same code so we expect that quantity of components with the same code
+    will be totaled, and they will be return as a one code with totaled quantity.
+    So the endpoint should return 2 components, the first and second as one and the third with different code"""
+
+    client = APIClient()
+    client.force_authenticate(test_user)
+
+    # component_1 and component_2 have both the same code but component_3 has different
+    component_1 = Component.objects.create(
+        code='15016610',
+        location=test_location,
+        quantity=1000,
+        weight=20,
+    )
+    component_2 = Component.objects.create(
+        code='15016610',
+        location=test_location,
+        quantity=500,
+        weight=10,
+    )
+
+    component_3 = Component.objects.create(
+        code='15016812',
+        location=test_location,
+        quantity=2000,
+        weight=15,
+    )
+
+    test_location.refresh_from_db()
+
+    response = client.get(f'/api/inventory/check_location/?location_name={location}')
+    assert response.status_code == expected_status
+
+    if expected_status == status.HTTP_200_OK:
+
+        message = response.data['message']
+
+        # List of all components grouped by code in our location, sorted by quantity
+        sorted_components = response.data['components']
+
+        assert len(sorted_components) == 2
+        assert message == f'All components on location {location}'
+
+        # The first element should be component_3 with code 15016812 because it has more quantity 2000
+        # The second element should be connected component_1 and component_2 with the same code 15016610
+        first_element, second_element = sorted_components
+
+        assert first_element['code'] == '15016812' and first_element['total_quantity'] == component_3.quantity
+        assert second_element['code'] == '15016610' and second_element['total_quantity'] == component_1.quantity + component_2.quantity
 
 
+def test_CheckLocationView_requires_authentication():
+    client = APIClient()
+    response = client.get('/api/inventory/check_location/')
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED

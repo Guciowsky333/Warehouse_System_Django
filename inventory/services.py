@@ -3,6 +3,7 @@ import string
 from inventory.models import Component, Location, ReleasedComponent
 from rest_framework.exceptions import NotFound
 from inventory.utils import validate_unique_code
+from django.db.models import Sum
 
 
 
@@ -69,5 +70,21 @@ def release_component(unique_code, department):
         "message":"Release component successfully",
     }
 
+
+def check_location(location):
+    """This function will show users what components are inside provided location"""
+
+    if not location:
+        raise ValueError('Location is required.')
+
+    location = Location.objects.filter(name=location).first()
+    if not location:
+        raise NotFound('Location not found')
+
+    # We are taking all components from provided location
+    # then group by code and count total_quantity for each code.Components are order by total_quantity descending
+    components = location.components.all().values('code').annotate(total_quantity=Sum('quantity')).order_by('-total_quantity')
+
+    return components
 
 

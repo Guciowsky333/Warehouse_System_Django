@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from inventory.services import change_location, release_component
+from inventory.services import change_location, release_component, check_location
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -61,5 +61,31 @@ class ReleasedComponentView(APIView):
                 "message": str(e)
             }, status=404)
 
+
+class CheckLocationView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        location = request.query_params.get('location_name')
+
+        try:
+            components = check_location(location)
+            return Response({
+                "message":f"All components on location {location}",
+                "components":list(components)  #<--- Function check_component returns QuerySet of components so we have to convert it to list
+            },status=200)
+
+
+
+        except ValueError as e:
+            return Response({
+                "message":str(e)
+            },status=400)
+
+
+        except NotFound as e:
+            return Response({
+                "message": str(e)
+            },status=404)
 
 
