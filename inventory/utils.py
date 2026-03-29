@@ -31,7 +31,7 @@ def validate_unique_code(unique_code):
     if ReleasedComponent.objects.filter(unique_code=unique_code).exists():
         raise ValueError(f'Status "4" - Component {unique_code} already is in production')
 
-    component = Component.objects.filter(unique_code=unique_code).first()
+    component = Component.objects.select_for_update().filter(unique_code=unique_code).first()
     if not component:
         raise NotFound(f'Component with unique code {unique_code} not found')
 
