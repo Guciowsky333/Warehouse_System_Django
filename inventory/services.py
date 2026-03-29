@@ -89,7 +89,9 @@ def release_component(unique_code, department):
 
 
 def check_location(location):
-    """This function will show users what components are inside provided location"""
+    """This function will show users what components are inside provided location
+    and also special fields total_boxes - Amount of  boxes with the same code and
+    total_quantity - Sum quantity components with the same code """
 
     if not location:
         raise ValueError('Location is required.')
