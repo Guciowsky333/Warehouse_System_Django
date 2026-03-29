@@ -1,69 +1,24 @@
 import pytest
 from inventory.models import Location, Component, ReleasedComponent
+from inventory.tests.test_models import test_component_unique_code
 from users.models import CustomUser
 from rest_framework import status
 from rest_framework.test import APIClient
 
 
-# fixtures
-@pytest.fixture
-def test_user(db):
-    return CustomUser.objects.create_user(
-        username="test_username1",
-        password="test_password1",
-        first_name="test_first_name1",
-        last_name="test_last_name1",
-        role="test_role1",
-    )
-
-@pytest.fixture
-def test_location(db):
-    return Location.objects.create(name="test_location")
-
-@pytest.fixture
-def test_location2(db):
-    return Location.objects.create(name="test_location2")
-
-
-@pytest.fixture
-def test_component(db, test_location2):
-    return Component.objects.create(
-        code="test_component",
-        unique_code="test_unique_code",
-        location=test_location2,
-        weight=20,
-        quantity=1000,
-    )
-@pytest.fixture
-def test_component2(db, test_location):
-    return Component.objects.create(
-        code="test_component2",
-        unique_code="test_unique_code2",
-        location=test_location,
-        weight=25,
-        quantity=500,
-    )
-@pytest.fixture
-def test_released_component(db):
-    return ReleasedComponent.objects.create(
-        code="test_released_component",
-        unique_code="test_released_unique_code",
-        department="test_department",
-        weight=20,
-        quantity=1000,
-    )
-
 # test for /api/inventory/change_location/
 @pytest.mark.parametrize(
     'payload, expected_status', [
 
-        # User provided empty unique_code or location
-        ({'unique_code':'', 'location':''}, status.HTTP_400_BAD_REQUEST),
+        # User provided empty unique_code
+        ({'unique_code':'', 'location':'test_location'}, status.HTTP_400_BAD_REQUEST),
+        # User provided empty location
+        ({'unique_code':'test_unique_code', 'location':''}, status.HTTP_400_BAD_REQUEST),
         # User provided unique code that dont exist
         ({'unique_code':'wrong_unique_code', 'location':'test_location'}, status.HTTP_404_NOT_FOUND),
         # User provided location that dont exist
         ({'unique_code':'test_unique_code', 'location':'wrong_location'}, status.HTTP_404_NOT_FOUND),
-        # User provided unique code that has been already released to production
+        # Status "4" means - User provided unique code that has been already released to production
         ({'unique_code':'test_released_unique_code', 'location':'wrong_location'}, status.HTTP_400_BAD_REQUEST),
         # Appropriate data
         ({'unique_code':'test_unique_code', 'location':'test_location'}, status.HTTP_200_OK),
@@ -125,6 +80,52 @@ def test_ChangeLocationView_max_weight(test_location, test_component, test_user)
     # Checking whether the test component not has been added to our test location as we expected
     assert not test_location.components.filter(unique_code='test_unique_code').exists()
 
+
+
+
+
+# Test for /api/inventory/release_component/
+@pytest.mark.parametrize(
+    'payload, expected_status', [
+        # Empty unique code
+        ({'unique_code':'', 'department':'5500'}, status.HTTP_400_BAD_REQUEST),
+        # Empty department
+        ({'unique_code':'test_unique_code', 'department':''}, status.HTTP_400_BAD_REQUEST),
+        # User provided wrong department allows [5000, 5500, 5800, 6000]
+        ({'unique_code':'test_unique_code', 'department':'wrong_department'}, status.HTTP_400_BAD_REQUEST),
+        # Status "4" means - User provided unique code that has been already released to production
+        ({'unique_code':'test_released_unique_code', 'department':'5500'}, status.HTTP_400_BAD_REQUEST),
+        # User provided unique code that not belong to any components
+        ({'unique_code':'wrong_unique_code', 'department':'5500'}, status.HTTP_404_NOT_FOUND),
+        # Appropriate data
+        ({'unique_code':'test_unique_code', 'department':'5500'}, status.HTTP_201_CREATED),
+
+    ]
+)
+
+def test_ReleasedComponentView(payload, expected_status, test_component, test_released_component, test_user):
+    client = APIClient()
+    client.force_authenticate(test_user)
+
+    # We are taking a unique code of our component before request to then check if it will be removed correctly
+    unique_code = test_component.unique_code
+
+    response = client.post('/api/inventory/release_component/', payload, format='json')
+    assert response.status_code == expected_status
+
+    if expected_status == status.HTTP_201_CREATED:
+
+        # Checking if our component has been removed from warehouse
+        assert not Component.objects.filter(unique_code=unique_code).exists()
+
+        # Checking if model ReleasedComponent with the same unique code and provided department has been created correctly
+        assert ReleasedComponent.objects.filter(unique_code=unique_code, department=payload['department']).exists()
+
+
+def test_ReleasedComponentView_requires_authentication():
+    client = APIClient()
+    response = client.get('/api/inventory/release_component/')
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 

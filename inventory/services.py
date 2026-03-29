@@ -65,5 +65,9 @@ def release_component(unique_code, department):
     # Removing component from warehouse
     component.delete()
 
+    return {
+        "message":"Release component successfully",
+    }
+
 
 
