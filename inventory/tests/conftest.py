@@ -22,20 +22,20 @@ def test_location2(db):
 
 
 @pytest.fixture
-def test_component(db, test_location2):
+def test_component(db, test_location):
     return Component.objects.create(
         code="test_component",
         unique_code="test_unique_code",
-        location=test_location2,
+        location=test_location,
         weight=20,
         quantity=1000,
     )
 @pytest.fixture
-def test_component2(db, test_location):
+def test_component2(db, test_location2):
     return Component.objects.create(
         code="test_component2",
         unique_code="test_unique_code2",
-        location=test_location,
+        location=test_location2,
         weight=25,
         quantity=500,
     )

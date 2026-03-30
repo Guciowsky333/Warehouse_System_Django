@@ -6,6 +6,7 @@ from inventory.tests.test_models import test_component_unique_code
 from users.models import CustomUser
 from rest_framework import status
 from rest_framework.test import APIClient
+from datetime import date
 
 
 # test for /api/inventory/change_location/
@@ -45,7 +46,7 @@ def test_ChangeLocationView_requires_authentication():
     response = client.get('/api/inventory/change_location/')
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-def test_ChangeLocationView_max_weight(test_location, test_component, test_user):
+def test_ChangeLocationView_max_weight(test_location2, test_component, test_user):
     """In this test we assigned to our test location component that weighs 790 kg
     so now we shouldn't be albe to add our test component that weighs 20 kg to this location
     because each location can't exceed 800 kg"""
@@ -59,16 +60,16 @@ def test_ChangeLocationView_max_weight(test_location, test_component, test_user)
     Component.objects.create(
         code="heavy_component",
         unique_code="heavy_unique_code",
-        location=test_location,
+        location=test_location2,
         weight=790,
         quantity=1000,
     )
 
-    test_location.refresh_from_db()
+    test_location2.refresh_from_db()
 
     body = {
         'unique_code': 'test_unique_code',
-        'location': 'test_location'
+        'location': 'test_location2'
     }
 
     response = client.patch('/api/inventory/change_location/', body, format='json')
@@ -77,10 +78,10 @@ def test_ChangeLocationView_max_weight(test_location, test_component, test_user)
     assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     # Checking if the total_weight of our location is still 790 kg
-    assert test_location.total_weight == 790
+    assert test_location2.total_weight == 790
 
     # Checking whether the test component not has been added to our test location as we expected
-    assert not test_location.components.filter(unique_code='test_unique_code').exists()
+    assert not test_location2.components.filter(unique_code='test_unique_code').exists()
 
 
 
@@ -130,7 +131,7 @@ def test_ReleasedComponentView_requires_authentication():
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
-# Test for /api/inventory/check_location/
+# Tests for /api/inventory/check_location/
 @pytest.mark.parametrize(
     'location, expected_status', [
         # Empty location
@@ -208,3 +209,82 @@ def test_CheckLocationView_requires_authentication():
     client = APIClient()
     response = client.get('/api/inventory/check_location/')
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+
+
+# Tests for /api/inventory/check_component/
+@pytest.mark.parametrize(
+    'code, expected_status', [
+        # Empty code
+        ('', status.HTTP_400_BAD_REQUEST),
+        # User provided code that dont exist
+        ('wrong_code', status.HTTP_404_NOT_FOUND),
+        # Appropriate data
+        ('15016812', status.HTTP_200_OK),
+    ]
+)
+
+def test_CheckComponentView(code, expected_status,test_location,test_location2, test_user):
+    """First we are creating 2 components with the same test code '15016812' and assigned them to different locations.
+    So, after we provide our test code the endpoint should return 2 components along with information
+    such as locations or quantities of that components order by date (FIFO)"""
+
+    client = APIClient()
+    client.force_authenticate(test_user)
+
+    older_component = Component.objects.create(
+        code='15016812',
+        unique_code='older_component_unique_code',
+        location=test_location,
+        quantity=1000,
+        weight=20,
+    )
+
+    younger_component = Component.objects.create(
+        code='15016812',
+        unique_code='younger_component_unique_code',
+        location=test_location2,
+        quantity=500,
+        weight=10,
+    )
+
+    test_location.refresh_from_db()
+    test_location2.refresh_from_db()
+
+    # Now we overwrite date of that two components the first one will be older and the second will be younger
+    # So the older component should be first in endpoint response according to FIFO (first in first out)
+    older_component.production_date = date(2020, 1, 1)
+
+
+    younger_component.production_date = date(2021, 1, 1)
+
+    response = client.get(f'/api/inventory/check_component/?code={code}')
+
+    assert response.status_code == expected_status
+
+    if expected_status == status.HTTP_200_OK:
+        assert response.data['message'] == f'All locations for component {code}'
+        assert len(response.data['components']) == 2
+
+        component_1, component_2 = response.data['components']
+
+        # We expect that first component will be the older one
+        assert component_1['unique_code'] == 'older_component_unique_code'
+        assert component_1['location_name'] == test_location.name
+
+        # And the second one will be younger
+        assert component_2['unique_code'] == 'younger_component_unique_code'
+        assert component_2['location_name'] == test_location2.name
+
+def test_CheckComponentView_requires_authentication():
+    client = APIClient()
+    response = client.get('/api/inventory/check_component/')
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+
+
+
+
+

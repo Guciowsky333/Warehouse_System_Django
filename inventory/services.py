@@ -109,4 +109,19 @@ def check_location(location):
 
     return components
 
+def check_component(code):
+    """This function will show users the component locations that they provided sorted by date.
+    This method is called FIFO(First in First Out) and it will show in what order they should release components """
+
+    if not code:
+        raise ValueError('Code is required.')
+
+    components = Component.objects.select_related('location').filter(code=code).order_by('production_date')
+
+    if not components.exists():
+        raise NotFound(f'Component {code} not found')
+
+    return components
+
+
 

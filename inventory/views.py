@@ -1,9 +1,10 @@
 from django.shortcuts import render
-from inventory.services import change_location, release_component, check_location
+from inventory.services import *
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.exceptions import NotFound
+from inventory.serializers import ComponentSerializer
 
 from users import permissions
 
@@ -87,5 +88,34 @@ class CheckLocationView(APIView):
             return Response({
                 "message": str(e)
             },status=404)
+
+class CheckComponentView(APIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = ComponentSerializer
+
+    def get(self, request):
+        code = request.query_params.get('code')
+
+        try:
+            components = check_component(code)
+            serializer = self.serializer_class(components, many=True)
+            return Response({
+                "message":f'All locations for component {code}',
+                'components':serializer.data,
+            }, status=200)
+
+        except ValueError as e:
+            return Response({
+                "message":str(e)
+
+            },status=400)
+
+        except NotFound as e:
+            return Response({
+                "message": str(e)
+            },status=404)
+
+
+
 
 
