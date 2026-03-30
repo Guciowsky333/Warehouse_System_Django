@@ -109,14 +109,39 @@ def check_location(location):
 
     return components
 
+
+
+
+
 def check_component(code):
-    """This function will show users the component locations that they provided sorted by date.
+    """This function will show users locations of a component that they provided sorted by date.
     This method is called FIFO(First in First Out) and it will show in what order they should release components """
 
     if not code:
         raise ValueError('Code is required.')
 
     components = Component.objects.select_related('location').filter(code=code).order_by('production_date')
+
+    if not components.exists():
+        raise NotFound(f'Component {code} not found')
+
+    return components
+
+
+
+
+def check_component_grouped(code):
+    """This function will show users locations of a component that they provided but this time it will show total
+    quantity of components and total boxes with provided code for each location sorted by total quantity. So if we have 3 boxes
+    with the same code at the same location function return they as one and total their quantity and boxes"""
+
+    if not code:
+        raise ValueError('Code is required.')
+
+    components = Component.objects.filter(code=code).values('location__name').annotate(
+        total_boxes=Count('id'),
+        total_quantity=Sum('quantity')
+    ).order_by('-total_quantity')
 
     if not components.exists():
         raise NotFound(f'Component {code} not found')

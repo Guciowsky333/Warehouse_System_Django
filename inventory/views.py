@@ -73,7 +73,9 @@ class CheckLocationView(APIView):
             components = check_location(location)
             return Response({
                 "message":f"All components on location {location}",
-                "components":list(components)  #<--- Function check_component returns QuerySet of components so we have to convert it to list
+
+                # Function check_component returns QuerySet of components so we have to convert it to list
+                "components":list(components)
             },status=200)
 
 
@@ -115,6 +117,29 @@ class CheckComponentView(APIView):
                 "message": str(e)
             },status=404)
 
+
+class CheckComponentGroupedView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        code = request.query_params.get('code')
+
+        try:
+            components = check_component_grouped(code)
+            return Response({
+                "message":f'All locations for component {code}',
+                "components":list(components)
+            }, status=200)
+
+        except ValueError as e:
+            return Response({
+                "message":str(e)
+            },status=400)
+
+        except NotFound as e:
+            return Response({
+                "message": str(e)
+            },status=404)
 
 
 

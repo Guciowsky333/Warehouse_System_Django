@@ -249,9 +249,6 @@ def test_CheckComponentView(code, expected_status,test_location,test_location2, 
         weight=10,
     )
 
-    test_location.refresh_from_db()
-    test_location2.refresh_from_db()
-
     # Now we overwrite date of that two components the first one will be older and the second will be younger
     # So the older component should be first in endpoint response according to FIFO (first in first out)
     older_component.production_date = date(2020, 1, 1)
@@ -280,6 +277,76 @@ def test_CheckComponentView(code, expected_status,test_location,test_location2, 
 def test_CheckComponentView_requires_authentication():
     client = APIClient()
     response = client.get('/api/inventory/check_component/')
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+# # Tests for /api/inventory/check_component/grouped/
+@pytest.mark.parametrize(
+    'code, expected_status', [
+        # Empty code
+        ('', status.HTTP_400_BAD_REQUEST),
+        # Not exist code
+        ('wrong_code', status.HTTP_404_NOT_FOUND),
+        # Appropriate data
+        ('15016610', status.HTTP_200_OK),
+    ]
+)
+
+def test_CheckComponentGroupedView(code, expected_status,test_location,test_location2, test_user):
+    """In this test we are creating 3 components with the same code '15016610' both of them to the same location
+    'test_location' and the last one to a different location 'test_location2'. We expect that endpoint returns two
+    element sorted by total quantity the first one will be grouped 2 components with the same
+    location and sum their quantities and amount of boxes and the second one will be single component at the different location """
+
+    client = APIClient()
+    client.force_authenticate(test_user)
+
+    component_1 = Component.objects.create(
+        code='15016610',
+        location=test_location,
+        quantity=1000,
+        weight=20,
+    )
+
+    component_2 = Component.objects.create(
+        code='15016610',
+        location=test_location,
+        quantity=1000,
+        weight=20,
+    )
+
+    # different location
+    component_3 = Component.objects.create(
+        code='15016610',
+        location=test_location2,
+        quantity=1000,
+        weight=20,
+    )
+
+    response = client.get(f'/api/inventory/check_component/grouped/?code={code}')
+
+    assert response.status_code == expected_status
+
+    if expected_status == status.HTTP_200_OK:
+        assert response.data['message'] == f'All locations for component {code}'
+        assert len(response.data['components']) == 2
+
+        first_element, second_element = response.data['components']
+
+        # We expect that first element will be component_1 and component_2 as one
+        # because they have bigger total quantity that second element
+        assert first_element['location__name'] == test_location.name
+        assert first_element['total_boxes'] == 2
+        assert first_element['total_quantity'] == component_1.quantity + component_2.quantity
+
+        # We expect that second element will be singe component_3 because it has less total quantity
+        assert second_element['location__name'] == test_location2.name
+        assert second_element['total_boxes'] == 1
+        assert second_element['total_quantity'] == component_3.quantity
+
+def test_CheckComponentGroupedView_requires_authentication():
+    client = APIClient()
+    response = client.get('/api/inventory/check_component/grouped/')
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
