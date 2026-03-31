@@ -9,5 +9,6 @@ urlpatterns = [
     path('check_component/', CheckComponentView.as_view(), name='check_component'),
     path('check_component/grouped/', CheckComponentGroupedView.as_view(), name='check_component_grouped'),
     path('quantity_in_department/', ShowQuantityInDepartmentView.as_view(), name='show_quantity_in_department'),
+    path('quantity_in_stock/', ShowQuantityInStockView.as_view(), name='show_quantity_in_stock'),
 
 ]

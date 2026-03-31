@@ -396,6 +396,46 @@ def test_ShowQuantityInDepartmentView(code, department, expected_status,test_use
         assert response.data['total_boxes'] == 2
 
 
+def test_ShowQuantityInDepartmentView_requires_authentication(test_user):
+    client = APIClient()
+    response = client.get('/api/inventory/quantity_in_department/')
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
+# # Test api/inventory/quantity_in_stock/
+@pytest.mark.parametrize(
+    'code, expected_status', [
+        ('', status.HTTP_400_BAD_REQUEST),
+        ('wrong_code', status.HTTP_404_NOT_FOUND),
+        ('15016807', status.HTTP_200_OK),
+    ]
+)
+def test_ShowQuantityInStockView(code, expected_status, test_user, test_location):
+    """In this test we are creating 2 Components with the same code '15016807'.
+    We expect that endpoint returns us total quantity of a component with provided code  and number of boxes in stock"""
 
+    client = APIClient()
+    client.force_authenticate(test_user)
+
+    component_1 = Component.objects.create(
+        code='15016807',
+        location=test_location,
+        quantity=1000,
+        weight=20,
+    )
+
+    component_2 = Component.objects.create(
+        code='15016807',
+        location=test_location,
+        quantity=500,
+        weight=20,
+    )
+
+    response = client.get(f'/api/inventory/quantity_in_stock/?code={code}')
+
+    assert response.status_code == expected_status
+
+    if expected_status == status.HTTP_200_OK:
+        assert response.data['code'] == f'{code}'
+        assert response.data['total_quantity'] == component_1.quantity + component_2.quantity
+        assert response.data['total_boxes'] == 2

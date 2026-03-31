@@ -150,7 +150,9 @@ def check_component_grouped(code):
 
 
 def component_quantity_at_department(code, department):
-    """This function will show users total quantity and total boxes of provided a component in the given department"""
+    """T
+    Return total quantity and number of boxes of provided component in provided department
+    """
 
     if not code or not department:
         raise ValueError('Code and Department are required.')
@@ -167,5 +169,27 @@ def component_quantity_at_department(code, department):
     total_quantity = result[0]['total_quantity']
 
     return total_boxes, total_quantity
+
+def component_quantity_at_stock(code):
+    """
+    Return total quantity and number of boxes of provided component in stock
+    """
+
+    if not code:
+        raise ValueError('Code is required.')
+
+    result = Component.objects.filter(code=code).values('code').annotate(
+        total_boxes=Count('id'),
+        total_quantity=Sum('quantity')
+    )
+
+    if not result.exists():
+        raise NotFound(f'Not founding component {code}')
+
+    total_boxes = result[0]['total_boxes']
+    total_quantity = result[0]['total_quantity']
+
+    return total_boxes, total_quantity
+
 
 

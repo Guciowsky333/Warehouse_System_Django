@@ -168,5 +168,28 @@ class ShowQuantityInDepartmentView(APIView):
                 "message": str(e)
             }, status=404)
 
+class ShowQuantityInStockView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        code = request.query_params.get('code')
+
+        try:
+            total_boxes, total_quantity = component_quantity_at_stock(code)
+            return Response({
+                'code':f'{code}',
+                'total_boxes': total_boxes,
+                'total_quantity': total_quantity,
+            }, status=200)
+
+        except ValueError as e:
+            return Response({
+                "message":str(e)
+            }, status=400)
+
+        except NotFound as e:
+            return Response({
+                "message": str(e)
+            }, status=404)
 
 
