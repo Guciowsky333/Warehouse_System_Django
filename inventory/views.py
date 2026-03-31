@@ -142,5 +142,31 @@ class CheckComponentGroupedView(APIView):
             },status=404)
 
 
+class ShowQuantityInDepartmentView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        code = request.query_params.get('code')
+        department = request.query_params.get('department')
+
+        try:
+            total_boxes, total_quantity = component_quantity_at_department(code, department)
+            return Response({
+                'code':f'{code}',
+                'department':f'{department}',
+                'total_quantity': total_quantity,
+                'total_boxes': total_boxes,
+            }, status=200)
+
+        except ValueError as e:
+            return Response({
+                "message":str(e)
+            }, status=400)
+
+        except NotFound as e:
+            return Response({
+                "message": str(e)
+            }, status=404)
+
 
 

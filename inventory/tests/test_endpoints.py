@@ -350,6 +350,50 @@ def test_CheckComponentGroupedView_requires_authentication():
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
+# Test api/inventory/quantity_in_department/
+
+@pytest.mark.parametrize(
+    'code, department, expected_status', [
+        ('', '5000', status.HTTP_400_BAD_REQUEST),
+        ('15016808', '', status.HTTP_400_BAD_REQUEST),
+        ('wrong_code', '5000', status.HTTP_404_NOT_FOUND),
+        ('15016610', 'wrong_department', status.HTTP_404_NOT_FOUND),
+        ('15016808', '5000', status.HTTP_200_OK),
+    ]
+)
+
+def test_ShowQuantityInDepartmentView(code, department, expected_status,test_user):
+    """In this test we are creating 2 ReleasedComponent with the same code '15016808' and the same department
+    '5000' and we expect that endpoint returns us sum quantity and boxes of code '15016808' in our department """
+
+    client = APIClient()
+    client.force_authenticate(test_user)
+
+    released_component1 = ReleasedComponent.objects.create(
+        code='15016808',
+        unique_code='unique_code',
+        department='5000',
+        quantity=1000,
+        weight=20,
+    )
+
+    released_component2 = ReleasedComponent.objects.create(
+        code='15016808',
+        unique_code='unique_code1',
+        department='5000',
+        quantity=500,
+        weight=10,
+    )
+
+    response = client.get(f'/api/inventory/quantity_in_department/?code={code}&department={department}')
+
+    assert response.status_code == expected_status
+
+    if expected_status == status.HTTP_200_OK:
+        assert response.data['code'] == f'{code}'
+        assert response.data['department'] == f'{department}'
+        assert response.data['total_quantity'] == released_component1.quantity + released_component2.quantity
+        assert response.data['total_boxes'] == 2
 
 
 

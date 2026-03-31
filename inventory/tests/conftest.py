@@ -70,3 +70,4 @@ def test_component2_for_models(db, test_location_for_models):
         weight=30,
         quantity=500,
     )
+
