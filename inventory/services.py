@@ -192,4 +192,45 @@ def component_quantity_at_stock(code):
     return total_boxes, total_quantity
 
 
+def undo_component(unique_code, location):
+    """
+    Returns the given component from department back to the warehouse at the specified location.
+
+    This function will remove ReleasedComponent with provided unique code ( if it exists) and
+    create again the component model with the same data such as unique code, quantity and weight and
+    specified location ( if it exists amd if this location won't exceed 800 kg limit per location
+    after adding this component)
+    """
+    with transaction.atomic():
+        if not unique_code or not location:
+            raise ValueError('Unique Code and Location are required.')
+
+        location = Location.objects.filter(name=location).first()
+        if not location:
+            raise NotFound('Location not found')
+
+        released_component = ReleasedComponent.objects.select_for_update().filter(unique_code=unique_code).first()
+        if not released_component:
+            raise NotFound('Component not found')
+
+        if location.total_weight + released_component.weight > 800:
+            raise ValueError(f'You can"t add component {released_component.code} to location {location.name}'
+                             f'total weight of location can"t exceed 800 kg')
+
+        # Creating component with the same data as our released_component
+        Component.objects.create(
+            code=released_component.code,
+            unique_code=unique_code,
+            location=location,
+            weight=released_component.weight,
+            quantity=released_component.quantity,
+        )
+
+        # Removing our released_component
+        released_component.delete()
+
+        return {
+            'message':f'Component {unique_code} was successfully returned to stock',
+        }
+
 

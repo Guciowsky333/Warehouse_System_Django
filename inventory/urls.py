@@ -10,5 +10,6 @@ urlpatterns = [
     path('check_component/grouped/', CheckComponentGroupedView.as_view(), name='check_component_grouped'),
     path('quantity_in_department/', ShowQuantityInDepartmentView.as_view(), name='show_quantity_in_department'),
     path('quantity_in_stock/', ShowQuantityInStockView.as_view(), name='show_quantity_in_stock'),
+    path('undo_component/', UndoComponentView.as_view(), name='undo_component'),
 
 ]

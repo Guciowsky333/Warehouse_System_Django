@@ -20,9 +20,7 @@ class ChangeLocationView(APIView):
 
         try:
             result = change_location(unique_code, location)
-            return Response({
-                "message":result
-            },status=200)
+            return Response(result, status=200)
 
         # if user provided inappropriate data
         except ValueError as e:
@@ -46,9 +44,7 @@ class ReleasedComponentView(APIView):
 
         try:
             result = release_component(unique_code, department)
-            return Response({
-                "message":result
-            }, status=201)
+            return Response(result, status=201)
 
         # if user provided inappropriate data
         except ValueError as e:
@@ -193,3 +189,23 @@ class ShowQuantityInStockView(APIView):
             }, status=404)
 
 
+class UndoComponentView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        unique_code = request.data.get('unique_code')
+        location = request.data.get('location')
+
+        try:
+            result = undo_component(unique_code, location)
+            return Response(result, status=201)
+
+        except ValueError as e:
+            return Response({
+                "message":str(e)
+            },status=400)
+
+        except NotFound as e:
+            return Response({
+                "message": str(e)
+            },status=404)

@@ -77,6 +77,7 @@ def test_ChangeLocationView_max_weight(test_location2, test_component, test_user
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST
 
+
     # Checking if the total_weight of our location is still 790 kg
     assert test_location2.total_weight == 790
 
@@ -123,6 +124,8 @@ def test_ReleasedComponentView(payload, expected_status, test_component, test_re
 
         # Checking if model ReleasedComponent with the same unique code and provided department has been created correctly
         assert ReleasedComponent.objects.filter(unique_code=unique_code, department=payload['department']).exists()
+
+        assert response.data['message'] == 'Release component successfully'
 
 
 def test_ReleasedComponentView_requires_authentication():
@@ -439,3 +442,85 @@ def test_ShowQuantityInStockView(code, expected_status, test_user, test_location
         assert response.data['code'] == f'{code}'
         assert response.data['total_quantity'] == component_1.quantity + component_2.quantity
         assert response.data['total_boxes'] == 2
+
+def test_ShowQuantityInStockView_requires_authentication(test_user):
+    client = APIClient()
+    response = client.get('/api/inventory/quantity_in_stock/')
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+# Test for api/inventory/undo_component/
+@pytest.mark.parametrize(
+    'payload, expected_status', [
+        # Empty unique_code
+        ({'unique_code':'','location':'test_location'}, status.HTTP_400_BAD_REQUEST),
+        # Empty location
+        ({'unique_code':'test_released_unique_code','location':''}, status.HTTP_400_BAD_REQUEST),
+        # not exist unique_code
+        ({'unique_code':'wrong_unique_code','location':'test_location'}, status.HTTP_404_NOT_FOUND),
+        # not exist location
+        ({'unique_code':'test_released_unique_code','location':'wrong_location'}, status.HTTP_404_NOT_FOUND),
+        # Appropriate data
+        ({'unique_code':'test_released_unique_code','location':'test_location'}, status.HTTP_201_CREATED),
+    ]
+)
+
+def test_UndoComponentView(payload, expected_status, test_user, test_released_component, test_location):
+    """This test checking if ReleasedComponent with provided unique code was removed correctly and if new
+     Component with the same data as ReleasedComponent and provided location was created successfully """
+
+    client = APIClient()
+    client.force_authenticate(test_user)
+
+    # We are taking all needed data from our test_released_component
+    expected_code = test_released_component.code
+    expected_unique_code = test_released_component.unique_code
+    expected_weight = test_released_component.weight
+    expected_quantity = test_released_component.quantity
+
+    response = client.post('/api/inventory/undo_component/', payload, format='json')
+
+    assert response.status_code == expected_status
+
+    if expected_status == status.HTTP_201_CREATED:
+        assert not ReleasedComponent.objects.filter(unique_code='test_released_unique_code').exists()
+
+
+        component = Component.objects.get(unique_code='test_released_unique_code')
+        assert component.code == expected_code
+        assert component.unique_code == expected_unique_code
+        assert component.weight == expected_weight
+        assert component.quantity == expected_quantity
+        assert component.location == test_location
+
+def test_UndoComponentView_max_weight(test_user, test_location, test_released_component):
+
+    client = APIClient()
+    client.force_authenticate(test_user)
+
+    Component.objects.create(
+        code='heavy_component',
+        unique_code='unique_code',
+        location=test_location,
+        weight=790,
+        quantity=1000,
+    )
+
+    body = {
+        'unique_code': test_released_component.unique_code,
+        'location': test_location.name,
+    }
+
+    response = client.post('/api/inventory/undo_component/', body, format='json')
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.data['message'] == (f'You can"t add component {test_released_component.code} to location {test_location.name}'
+                             f'total weight of location can"t exceed 800 kg')
+
+    assert test_location.total_weight == 790
+    assert not test_location.components.filter(unique_code=test_released_component.unique_code).exists()
+
+
+def test_UndoComponentView_requires_authentication(test_user):
+    client = APIClient()
+    response = client.get('/api/inventory/undo_component/')
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
