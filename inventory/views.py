@@ -17,9 +17,10 @@ class ChangeLocationView(APIView):
     def patch(self, request):
         unique_code = request.data.get('unique_code')
         location = request.data.get('location')
+        user = request.user
 
         try:
-            result = change_location(unique_code, location)
+            result = change_location(unique_code, location, user)
             return Response(result, status=200)
 
         # if user provided inappropriate data
@@ -41,9 +42,10 @@ class ReleasedComponentView(APIView):
     def post(self, request):
         unique_code = request.data.get('unique_code')
         department = request.data.get('department')
+        user = request.user
 
         try:
-            result = release_component(unique_code, department)
+            result = release_component(unique_code, department, user)
             return Response(result, status=201)
 
         # if user provided inappropriate data
@@ -195,9 +197,10 @@ class UndoComponentView(APIView):
     def post(self, request):
         unique_code = request.data.get('unique_code')
         location = request.data.get('location')
+        user = request.user
 
         try:
-            result = undo_component(unique_code, location)
+            result = undo_component(unique_code, location, user)
             return Response(result, status=201)
 
         except ValueError as e:

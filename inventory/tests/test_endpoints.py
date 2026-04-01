@@ -7,28 +7,28 @@ from users.models import CustomUser
 from rest_framework import status
 from rest_framework.test import APIClient
 from datetime import date
-
+from history.models import ComponentHistory
 
 # test for /api/inventory/change_location/
 @pytest.mark.parametrize(
     'payload, expected_status', [
 
         # User provided empty unique_code
-        ({'unique_code':'', 'location':'test_location'}, status.HTTP_400_BAD_REQUEST),
+        ({'unique_code':'', 'location':'test_location2'}, status.HTTP_400_BAD_REQUEST),
         # User provided empty location
         ({'unique_code':'test_unique_code', 'location':''}, status.HTTP_400_BAD_REQUEST),
         # User provided unique code that dont exist
-        ({'unique_code':'wrong_unique_code', 'location':'test_location'}, status.HTTP_404_NOT_FOUND),
+        ({'unique_code':'wrong_unique_code', 'location':'test_location2'}, status.HTTP_404_NOT_FOUND),
         # User provided location that dont exist
         ({'unique_code':'test_unique_code', 'location':'wrong_location'}, status.HTTP_404_NOT_FOUND),
         # Status "4" means - User provided unique code that has been already released to production
-        ({'unique_code':'test_released_unique_code', 'location':'wrong_location'}, status.HTTP_400_BAD_REQUEST),
+        ({'unique_code':'test_released_unique_code', 'location':'test_location2'}, status.HTTP_400_BAD_REQUEST),
         # Appropriate data
-        ({'unique_code':'test_unique_code', 'location':'test_location'}, status.HTTP_200_OK),
+        ({'unique_code':'test_unique_code', 'location':'test_location2'}, status.HTTP_200_OK),
     ]
 )
 
-def test_ChangeLocationView(payload, expected_status, test_component, test_location, test_user, test_released_component):
+def test_ChangeLocationView(payload, expected_status, test_component,test_location, test_location2, test_user, test_released_component):
     client = APIClient()
     client.force_authenticate(test_user)
 
@@ -39,7 +39,24 @@ def test_ChangeLocationView(payload, expected_status, test_component, test_locat
 
     # checking if our test component has been added to our test location correctly
     if expected_status == status.HTTP_200_OK:
-        assert test_location.components.filter(unique_code="test_unique_code").exists()
+        assert test_location2.components.filter(unique_code="test_unique_code").exists()
+
+
+        # checking if this action was added correctly in our history
+        assert ComponentHistory.objects.filter(
+            action = 'change_location',
+
+            code=test_component.code,
+            unique_code=test_component.unique_code,
+            quantity=test_component.quantity,
+            weight=test_component.weight,
+
+            user=test_user,
+            full_name=test_user.full_name(),
+
+            previous_location=test_location,
+            current_location=test_location2,
+        ).exists()
 
 def test_ChangeLocationView_requires_authentication():
     client = APIClient()
@@ -111,8 +128,8 @@ def test_ReleasedComponentView(payload, expected_status, test_component, test_re
     client = APIClient()
     client.force_authenticate(test_user)
 
-    # We are taking a unique code of our component before request to then check if it will be removed correctly
-    unique_code = test_component.unique_code
+    component = test_component
+
 
     response = client.post('/api/inventory/release_component/', payload, format='json')
     assert response.status_code == expected_status
@@ -120,12 +137,30 @@ def test_ReleasedComponentView(payload, expected_status, test_component, test_re
     if expected_status == status.HTTP_201_CREATED:
 
         # Checking if our component has been removed from warehouse
-        assert not Component.objects.filter(unique_code=unique_code).exists()
+        assert not Component.objects.filter(unique_code=payload['unique_code']).exists()
 
         # Checking if model ReleasedComponent with the same unique code and provided department has been created correctly
-        assert ReleasedComponent.objects.filter(unique_code=unique_code, department=payload['department']).exists()
+        assert ReleasedComponent.objects.filter(unique_code=payload['unique_code'], department=payload['department']).exists()
 
         assert response.data['message'] == 'Release component successfully'
+
+        # checking if this action was added correctly in our history
+        assert ComponentHistory.objects.filter(
+            action='component_release',
+
+            code=test_component.code,
+            unique_code=test_component.unique_code,
+            quantity=test_component.quantity,
+            weight=test_component.weight,
+
+            user=test_user,
+            full_name=test_user.full_name(),
+
+            previous_location=test_component.location.name,
+            current_location=payload['department'],
+        ).exists()
+
+
 
 
 def test_ReleasedComponentView_requires_authentication():
@@ -471,11 +506,6 @@ def test_UndoComponentView(payload, expected_status, test_user, test_released_co
     client = APIClient()
     client.force_authenticate(test_user)
 
-    # We are taking all needed data from our test_released_component
-    expected_code = test_released_component.code
-    expected_unique_code = test_released_component.unique_code
-    expected_weight = test_released_component.weight
-    expected_quantity = test_released_component.quantity
 
     response = client.post('/api/inventory/undo_component/', payload, format='json')
 
@@ -486,11 +516,30 @@ def test_UndoComponentView(payload, expected_status, test_user, test_released_co
 
 
         component = Component.objects.get(unique_code='test_released_unique_code')
-        assert component.code == expected_code
-        assert component.unique_code == expected_unique_code
-        assert component.weight == expected_weight
-        assert component.quantity == expected_quantity
+        assert component.code == test_released_component.code
+        assert component.unique_code == test_released_component.unique_code
+        assert component.weight == test_released_component.weight
+        assert component.quantity == test_released_component.quantity
         assert component.location == test_location
+
+
+        # checking if this action was added correctly in our history
+        assert ComponentHistory.objects.filter(
+            action='component_undo',
+
+            code=test_released_component.code,
+            unique_code=test_released_component.unique_code,
+            quantity=test_released_component.quantity,
+            weight=test_released_component.weight,
+
+            user=test_user,
+            full_name=test_user.full_name(),
+
+            previous_location=test_released_component.department,
+            current_location=test_location.name,
+        ).exists()
+
+
 
 def test_UndoComponentView_max_weight(test_user, test_location, test_released_component):
 

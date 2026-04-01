@@ -5,10 +5,11 @@ from rest_framework.exceptions import NotFound
 from inventory.utils import validate_unique_code
 from django.db.models import Sum, Count
 from django.db import transaction
+from history.models import ComponentHistory
 
 
 
-def change_location(unique_code, location):
+def change_location(unique_code, location, user):
     """This function takes component by provided
     unique code and change location to provided one"""
 
@@ -37,17 +38,34 @@ def change_location(unique_code, location):
             raise ValueError(f'The location {location.name} already weighs'
                              f' {location.total_weight} kg, you can"t add another {component.weight} kg.Max weight of one location is 800 kg ')
 
+        # Adding this to history
+        ComponentHistory.objects.create(
+            action="change_location",
+
+            code=component.code,
+            unique_code=component.unique_code,
+            quantity=component.quantity,
+            weight=component.weight,
+
+            user=user,
+            full_name=user.full_name(),
+
+            previous_location= component.location.name,
+            current_location= location.name,
+        )
 
         # changing location of the component to a new one
         component.location = location
         component.save()
+
+
 
         return {
             "message":"Changed location successfully",
         }
 
 
-def release_component(unique_code, department):
+def release_component(unique_code, department, user):
     """This function takes component from warehouse by unique code
     remove it and create released component model based on data from removing component """
 
@@ -78,6 +96,22 @@ def release_component(unique_code, department):
             weight = component.weight,
             quantity = component.quantity,
             department = department,
+        )
+
+        # Adding this to history
+        ComponentHistory.objects.create(
+            action="component_release",
+
+            code = component.code,
+            unique_code = component.unique_code,
+            quantity = component.quantity,
+            weight = component.weight,
+
+            user=user,
+            full_name = user.full_name(),
+
+            previous_location = component.location.name,
+            current_location = department
         )
 
         # Removing component from warehouse
@@ -192,7 +226,7 @@ def component_quantity_at_stock(code):
     return total_boxes, total_quantity
 
 
-def undo_component(unique_code, location):
+def undo_component(unique_code, location, user):
     """
     Returns the given component from department back to the warehouse at the specified location.
 
@@ -224,6 +258,22 @@ def undo_component(unique_code, location):
             location=location,
             weight=released_component.weight,
             quantity=released_component.quantity,
+        )
+
+        # Adding this to history
+        ComponentHistory.objects.create(
+            action="component_undo",
+
+            code=released_component.code,
+            unique_code=released_component.unique_code,
+            quantity=released_component.quantity,
+            weight=released_component.weight,
+
+            user=user,
+            full_name=user.full_name(),
+
+            previous_location=released_component.department,
+            current_location=location.name,
         )
 
         # Removing our released_component
