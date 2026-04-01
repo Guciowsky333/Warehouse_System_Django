@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     #new
     'users',
     'inventory',
+    'history',
 ]
 
 MIDDLEWARE = [
