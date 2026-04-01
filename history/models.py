@@ -24,3 +24,6 @@ class ComponentHistory(models.Model):
     previous_location = models.CharField(max_length=100)
     current_location = models.CharField(max_length=100)
 
+    def __str__(self):
+        return self.code
+
