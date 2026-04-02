@@ -573,3 +573,49 @@ def test_UndoComponentView_requires_authentication(test_user):
     client = APIClient()
     response = client.get('/api/inventory/undo_component/')
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+# Test for api/inventory/receive_component/
+@pytest.mark.parametrize(
+    'payload, expected_status', [
+        # Empty code
+        ({'code':'','weight':20,'quantity':1000},status.HTTP_400_BAD_REQUEST),
+        # Empty weight
+        ({'code':'15016610','weight':'','quantity':1000},status.HTTP_400_BAD_REQUEST),
+        # Empty quantity
+        ({'code':'15016610','weight':20,'quantity':''},status.HTTP_400_BAD_REQUEST),
+        # Appropriate data
+        ({'code':'15016610','weight':20,'quantity':1000},status.HTTP_201_CREATED),
+
+    ]
+)
+
+def test_ReceivingComponentView(payload, expected_status, test_manager, test_location_EXTC):
+
+    client = APIClient()
+    client.force_authenticate(test_manager)
+
+    response = client.post('/api/inventory/receive_component/', payload, format='json')
+
+    assert response.status_code == expected_status
+
+    if expected_status == status.HTTP_201_CREATED:
+
+        assert Component.objects.filter(
+            code=payload['code'],
+            quantity=payload['quantity'],
+            weight=payload['weight'],
+            location=test_location_EXTC,
+        ).exists()
+
+
+def test_ReceivingComponentView_not_manager_user(test_user):
+    client = APIClient()
+    client.force_authenticate(test_user)
+    response = client.get('/api/inventory/receive_component/')
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+def test_ReceivingComponentView_requires_authentication(test_manager):
+    client = APIClient()
+    response = client.get('/api/inventory/receive_component/')
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED

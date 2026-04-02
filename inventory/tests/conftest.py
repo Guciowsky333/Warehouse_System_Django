@@ -13,12 +13,26 @@ def test_user(db):
     )
 
 @pytest.fixture
+def test_manager(db):
+    return CustomUser.objects.create_user(
+        username="test_username1",
+        password="test_password1",
+        first_name="test_first_name1",
+        last_name="test_last_name1",
+        role="manager",
+    )
+
+@pytest.fixture
 def test_location(db):
     return Location.objects.create(name="test_location")
 
 @pytest.fixture
 def test_location2(db):
     return Location.objects.create(name="test_location2")
+
+@pytest.fixture
+def test_location_EXTC(db):
+    return Location.objects.create(name="EXTC")
 
 
 @pytest.fixture
@@ -70,4 +84,5 @@ def test_component2_for_models(db, test_location_for_models):
         weight=30,
         quantity=500,
     )
+
 

@@ -11,5 +11,6 @@ urlpatterns = [
     path('quantity_in_department/', ShowQuantityInDepartmentView.as_view(), name='show_quantity_in_department'),
     path('quantity_in_stock/', ShowQuantityInStockView.as_view(), name='show_quantity_in_stock'),
     path('undo_component/', UndoComponentView.as_view(), name='undo_component'),
+    path('receive_component/', ReceivingComponentView.as_view(), name='receive_component'),
 
 ]

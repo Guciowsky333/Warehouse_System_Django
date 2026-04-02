@@ -284,3 +284,27 @@ def undo_component(unique_code, location, user):
         }
 
 
+def receiving_the_component_into_the_warehouse(code,weight, quantity):
+    """
+    Create a component model with EXTC location
+
+    EXTC location is used to receive components into the warehouse.
+    So if any component is on EXTC location it means that it has just received at the warehouse
+    """
+
+    if not code or not weight or not quantity:
+        raise ValueError('Code and Weight and Quantity are required.')
+
+    location_EXTC = Location.objects.filter(name='EXTC').first()
+
+
+    Component.objects.create(
+        code=code,
+        weight=weight,
+        quantity=quantity,
+        location=location_EXTC,
+    )
+
+    return {
+        'message':f'The {code} component was successfully received into the warehouse',
+    }

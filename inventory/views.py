@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.exceptions import NotFound
 from inventory.serializers import ComponentSerializer
+from users.permissions import IsManager
 
 from users import permissions
 
@@ -212,3 +213,22 @@ class UndoComponentView(APIView):
             return Response({
                 "message": str(e)
             },status=404)
+
+
+class ReceivingComponentView(APIView):
+
+    # only users with the manager role can receive components in the warehous
+    permission_classes = [IsAuthenticated, IsManager]
+    def post(self, request):
+        code = request.data.get('code')
+        quantity = request.data.get('quantity')
+        weight = request.data.get('weight')
+
+        try:
+            result = receiving_the_component_into_the_warehouse(code, weight, quantity)
+            return Response(result,status=201)
+
+        except ValueError as e:
+            return Response({
+                'message':str(e)
+            },status=400)
