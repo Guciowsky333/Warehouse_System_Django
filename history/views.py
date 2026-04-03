@@ -5,27 +5,39 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.exceptions import NotFound
 from history.models import ComponentHistory
-from history.serializers import HistorySerializer
+from history.serializers import ComponentHistorySerializer
+from history.services import *
 # Create your views here.
 
 
-class ComponentHistoryByCodeView(APIView):
+class ComponentsHistoryView(APIView):
     permission_classes = [IsAuthenticated]
-    serializer_class = HistorySerializer
+    serializer_class = ComponentHistorySerializer
 
     def get(self, request):
         code = request.query_params.get('code')
+        unique_code = request.query_params.get('unique_code')
+        user_name = request.query_params.get('user_name')
         action = request.query_params.get('action')
 
-        queryset = ComponentHistory.objects.filter(code=code)
+        try:
+            result = history(code, unique_code, user_name, action)
+            message, queryset = result['message'], result['history']
 
-        if action:
-            queryset = queryset.filter(action=action)
+            serializer = ComponentHistorySerializer(queryset, many=True)
 
-        if not queryset.exists():
-            raise NotFound(f'Invalid code or action')
+            return Response({
+                'message': message,
+                'history': serializer.data
+            })
 
-        return Response({
-            'message':f'History of code {code}',
-            'history':self.serializer_class(queryset, many=True).data
-        })
+
+        except NotFound as e:
+            return Response({
+                'message':str(e),
+            }, status=404)
+
+        except ValueError as e:
+            return Response({
+                'message':str(e),
+            }, status=400)
