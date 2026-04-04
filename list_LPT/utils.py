@@ -4,7 +4,7 @@ import string
 
 def generate_number_of_list():
 
-    from list_LPT.models import LPT_list
+    from list_LPT.models import ListLPT
     numbers = string.digits
 
     while True:
@@ -12,6 +12,6 @@ def generate_number_of_list():
         list_number = ''.join(secrets.choice(numbers) for _ in range(10))
 
         # checking if list of this number already exist
-        if not LPT_list.objects.filter(list_number=list_number).exists():
+        if not ListLPT.objects.filter(list_number=list_number).exists():
             return list_number
 

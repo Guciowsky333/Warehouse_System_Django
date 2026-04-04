@@ -1,6 +1,7 @@
 from django.db import models
 from inventory.utils import generate_unique_code
 from django.db.models import Sum
+from list_LPT.models import ListLPT
 
 # Create your models here.
 class Location(models.Model):
@@ -31,6 +32,9 @@ class Component(models.Model):
     weight = models.FloatField()
     quantity = models.IntegerField()
     production_date = models.DateField(auto_now_add=True)
+
+    # This filed is used in list_LPT application when user want creates a list of components
+    list = models.ForeignKey(ListLPT, on_delete=models.CASCADE, related_name='components', null=True, blank=True)
 
     def __str__(self):
         return self.code
