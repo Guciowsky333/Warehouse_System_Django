@@ -42,10 +42,11 @@ INSTALLED_APPS = [
     #rest
     'rest_framework',
 
-    #new
+    #applications
     'users',
     'inventory',
     'history',
+    'list_LPT',
 ]
 
 MIDDLEWARE = [
