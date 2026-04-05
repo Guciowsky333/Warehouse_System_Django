@@ -21,18 +21,20 @@ def validate_component(code, quantity):
     if not code or not quantity:
         raise ValueError('Fields code and quantity are required')
 
-    if not quantity.isdigit():
-        raise ValueError('Quantity must be an integer')
 
 
-    components = Component.objecst.filter(list__isnull=True)
+    if not str(quantity).isdigit():
+        raise ValueError('Quantity must be a number')
+
+    quantity = int(quantity)
+    components = Component.objects.filter(list__isnull=True)
 
     if not components.filter(code=code).exists():
         raise NotFound('Code not found')
 
     total_quantity_at_stock = components.filter(code=code).aggregate(total_quantity=Sum('quantity'))
     if quantity > total_quantity_at_stock['total_quantity']:
-        raise ValueError(f'Dont enough quantity at stock. In the stock is only {component_quantity_at_stock["total_quantity"]}')
+        raise ValueError(f'Dont enough quantity at stock. In the stock is only {total_quantity_at_stock['total_quantity']}')
 
     return code, quantity
 
@@ -52,7 +54,7 @@ def create_list(order_components:list[Item]) -> str:
 
     # we are using transaction.atomic() to dont create a listLPT when one of the provided components won't pass validations
     with transaction.atomic():
-        listLPT = ListLPT.objecst.create()
+        listLPT = ListLPT.objects.create()
 
         for order_component in order_components:
             code = order_component['code']
@@ -74,15 +76,16 @@ def create_list(order_components:list[Item]) -> str:
 
                 # We assign components to our list sorted by date until total quantity of that component
                 # will be higher or equal to quantity that user want to order from warehouse
-                if total_quantity <= valid_quantity:
+                if total_quantity >= valid_quantity:
                     continue
                 total_quantity += component.quantity
-                component.list = ListLPT
+                component.list = listLPT
                 component.save()
 
-        return 'List was created successfully'
-
-
+    return {
+        'message':'List was created successfully',
+        'list_number': listLPT.list_number,
+    }
 
 
 

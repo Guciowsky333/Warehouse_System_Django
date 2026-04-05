@@ -15,7 +15,7 @@ class OrderComponent(models.Model):
     This model represents code of component and quantity that user's with foreman or manager role
     want to order form warehouse
     """
-    list = models.ForeignKey(ListLPT, on_delete=models.CASCADE)
+    list = models.ForeignKey(ListLPT, on_delete=models.CASCADE, related_name='order_components')
     code = models.CharField()
     quantity = models.IntegerField()
 

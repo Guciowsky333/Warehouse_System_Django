@@ -43,9 +43,7 @@ class CreateListView(APIView):
 
         try:
             result = create_list(components)
-            return Response({
-                'message': f'{result}'
-            }, status=201)
+            return Response(result, status=20)
 
         except ValueError as e:
             return Response({
