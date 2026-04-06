@@ -11,8 +11,8 @@ class ComponentHistory(models.Model):
 
     action = models.CharField(choices=ACTIONS, max_length=17)
 
-    code = models.CharField(max_length=10)
-    unique_code = models.CharField(max_length=15)
+    code = models.CharField(max_length=10, db_index=True)
+    unique_code = models.CharField(max_length=15, db_index=True)
     quantity = models.IntegerField()
     weight = models.FloatField()
 
