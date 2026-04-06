@@ -60,6 +60,7 @@ def test_CreateListView(test_user_foreman, test_components_15016610, test_compon
     client.force_authenticate(test_user_foreman)
 
     body = {
+        'department':'5000',
         'components':[
             {'code':'15016610','quantity':2000},
             {'code':'15016812','quantity':1000},
@@ -79,6 +80,7 @@ def test_CreateListView(test_user_foreman, test_components_15016610, test_compon
     component_15016808_1, component_15016808_2 = test_components_15016808
 
     response = client.post('/api/list_LPT/create_list/', body, format='json')
+
 
     # refreshing all components
     for component in test_components_15016610 + test_components_15016812 + test_components_15016808:

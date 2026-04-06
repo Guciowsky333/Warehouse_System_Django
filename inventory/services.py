@@ -27,9 +27,6 @@ def change_location(unique_code, location, user):
 
         location = Location.objects.filter(name=location).first()
 
-
-
-
         if not location:
             raise NotFound(f'Location {location} not found')
 

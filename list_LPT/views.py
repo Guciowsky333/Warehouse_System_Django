@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from list_LPT.models import *
 from list_LPT.services import *
 from list_LPT.permissions import IsForemanOrHigher
+from list_LPT.serializers import ListLPTSerializer
 
 # Create your views here.
 
@@ -37,13 +38,18 @@ class ValidateComponentView(APIView):
 
 class CreateListView(APIView):
     permission_classes = [IsAuthenticated, IsForemanOrHigher]
+    serializer_class = ListLPTSerializer
 
     def post(self, request):
         components = request.data.get('components')
+        department = request.data.get('department')
+        user = request.user
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
         try:
-            result = create_list(components)
-            return Response(result, status=20)
+            result = create_list(components, department, user)
+            return Response(result, status=201)
 
         except ValueError as e:
             return Response({

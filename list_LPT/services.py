@@ -2,6 +2,7 @@ from inventory.services import component_quantity_at_stock
 from list_LPT.models import *
 from rest_framework.exceptions import NotFound
 from inventory.models import Component
+from users.models import CustomUser
 from django.db.models import Sum
 from typing import TypedDict
 from django.db import transaction
@@ -45,16 +46,20 @@ def validate_component(code, quantity):
 class Item(TypedDict):
     code : str
     quantity : int
-def create_list(order_components:list[Item]) -> str:
+def create_list(order_components:list[Item], department:str, user:CustomUser) -> dict:
     """
-    This function creates a list with components that user want to order from warehouse
-    (OrderComponent model) if they pass validations.
-    THe function also assigned all boxes of ordered components (Component model) sorted by FIFO method (first in first out)
+    This function creates a list to provided department and create OrderComponent model with components
+    that user want to order from warehouse if they pass validations and added them to the list.
+    The function also assigned all boxes of ordered components (Component model) sorted by FIFO method (First in First out)
     """
 
     # we are using transaction.atomic() to dont create a listLPT when one of the provided components won't pass validations
     with transaction.atomic():
-        listLPT = ListLPT.objects.create()
+
+        listLPT = ListLPT.objects.create(
+            department=department,
+            user=user
+        )
 
         for order_component in order_components:
             code = order_component['code']
@@ -86,6 +91,10 @@ def create_list(order_components:list[Item]) -> str:
         'message':'List was created successfully',
         'list_number': listLPT.list_number,
     }
+
+
+
+
 
 
 

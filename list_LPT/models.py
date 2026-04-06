@@ -1,11 +1,26 @@
 from django.db import models
 from list_LPT.utils import generate_number_of_list
+from users.models import CustomUser
 
 # Create your models here.
 
 class ListLPT(models.Model):
+    DEPARTMENTS = {
+        "5000": "5000",
+        "5500": "5500",
+        "5800": "5800",
+        "6000": "6000",
+    }
+
+
     list_number = models.CharField(default=generate_number_of_list, unique=True, max_length=10)
     closed = models.BooleanField(default=False)
+    department = models.CharField(max_length=4, choices=DEPARTMENTS)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    date = models.DateField(auto_now_add=True)
+
+
+
 
     def __str__(self):
         return self.list_number
