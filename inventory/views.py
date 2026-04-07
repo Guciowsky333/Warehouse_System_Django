@@ -49,13 +49,13 @@ class ReleasedComponentView(APIView):
             result = release_component(unique_code, department, user)
             return Response(result, status=201)
 
-        # if user provided inappropriate data
+
         except ValueError as e:
             return Response({
                 "message":str(e)
             },status=400)
 
-        # if user provided data that not exist in database
+
         except NotFound as e:
             return Response({
                 "message": str(e)

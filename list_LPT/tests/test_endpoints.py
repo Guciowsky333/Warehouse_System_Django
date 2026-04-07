@@ -135,6 +135,35 @@ def test_CreateListView(test_user_foreman, test_components_15016610, test_compon
     assert component_15016808_2.list == created_list
 
 
+
+@pytest.mark.parametrize(
+    'body, expected_status',[
+        # Wrong department
+        ({
+            'department':'wrong_department',
+            'components':[
+                {'code':'15016610','quantity':2000},
+            ]
+        },status.HTTP_400_BAD_REQUEST),
+        # User tried order the same code twice
+        ({
+             'department': '5000',
+             'components': [
+                 {'code': '15016610', 'quantity': 2000},
+                 {'code': '15016610', 'quantity': 1000},
+
+             ]
+         }, status.HTTP_400_BAD_REQUEST),
+]
+)
+def test_CreateListView_invalid_data(body, expected_status, test_user_foreman, test_components_15016610):
+    client = APIClient()
+    client.force_authenticate(test_user_foreman)
+    response = client.post('/api/list_LPT/create_list/', body, format='json')
+    assert response.status_code == expected_status
+
+
+
 def test_CreateListView_with_warehouseman_role(test_user_warehouseman):
     client = APIClient()
     client.force_authenticate(test_user_warehouseman)

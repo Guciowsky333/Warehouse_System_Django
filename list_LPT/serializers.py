@@ -2,7 +2,11 @@ from rest_framework import serializers
 from list_LPT.models import ListLPT
 
 class ListLPTSerializer(serializers.Serializer):
+    """
+    This serializer is used to validation department that user provided in body
+    """
     department = serializers.ChoiceField(choices=ListLPT.DEPARTMENTS)
+
 
     def to_internal_value(self, data):
         if isinstance(data.get('department'), int):

@@ -1,11 +1,13 @@
 from inventory.services import component_quantity_at_stock
 from list_LPT.models import *
 from rest_framework.exceptions import NotFound
-from inventory.models import Component
+from inventory.models import Component, ReleasedComponent
 from users.models import CustomUser
+from history.models import ComponentHistory
 from django.db.models import Sum
 from typing import TypedDict
 from django.db import transaction
+from django.core.exceptions import ObjectDoesNotExist
 
 def validate_component(code, quantity):
     """
@@ -53,10 +55,10 @@ def create_list(order_components:list[Item], department:str, user:CustomUser) ->
     The function also assigned all boxes of ordered components (Component model) sorted by FIFO method (First in First out)
     """
 
-    # we are using transaction.atomic() to dont create a listLPT when one of the provided components won't pass validations
+    # we use transaction.atomic() to dont create a listLPT when one of the provided components won't pass validations
     with transaction.atomic():
 
-        listLPT = ListLPT.objects.create(
+        list_lpt = ListLPT.objects.create(
             department=department,
             user=user
         )
@@ -67,8 +69,12 @@ def create_list(order_components:list[Item], department:str, user:CustomUser) ->
 
             valid_code, valid_quantity = validate_component(code, quantity)
 
+            if list_lpt.order_components.filter(code=code).exists():
+                raise ValueError(f'Code {code} is already on this list you can"t ordered it twice')
+
+
             OrderComponent.objects.create(
-                list=listLPT,
+                list=list_lpt,
                 code=valid_code,
                 quantity=valid_quantity,
             )
@@ -84,13 +90,102 @@ def create_list(order_components:list[Item], department:str, user:CustomUser) ->
                 if total_quantity >= valid_quantity:
                     continue
                 total_quantity += component.quantity
-                component.list = listLPT
+                component.list = list_lpt
                 component.save()
 
     return {
         'message':'List was created successfully',
-        'list_number': listLPT.list_number,
+        'list_number': list_lpt.list_number,
     }
+
+
+def released_component_from_list(list_number: str, unique_code: str, user:CustomUser) -> dict:
+    """
+    This function check whether a list with provided number exist and if component with provided unique code exists
+    in this list.If yes it removing this component from warehouse and create ReleasedComponent and ComponentHistory
+    """
+
+    with transaction.atomic():
+
+        try:
+            list_lpt = ListLPT.objects.get(list_number=list_number)
+        except ObjectDoesNotExist:
+            raise NotFound(f'List number {list_number} not found')
+
+
+        if list_lpt.closed:
+            raise ValueError('This list has already been closed')
+
+
+        # First we check if component with provided unique code exist in stock at all
+        try:
+            component = Component.objects.select_for_update().get(unique_code=unique_code)
+        except ObjectDoesNotExist:
+            raise NotFound(f'Component {unique_code} not found at stock')
+
+
+        # Taking all components from our list
+        components_in_list = list_lpt.components.all()
+
+        if component not in components_in_list:
+            raise ValueError('This component is not on this list')
+
+
+        # We create ReleasedComponent and ComponentHistory with data from our component
+        # and then removing this component from warehouse
+
+        ReleasedComponent.objects.create(
+            code= component.code,
+            unique_code=component.unique_code,
+            weight=component.weight,
+            quantity=component.quantity,
+            department=list_lpt.department,
+        )
+
+        ComponentHistory.objects.create(
+            action='component_release',
+
+            code = component.code,
+            unique_code = component.unique_code,
+            weight = component.weight,
+            quantity = component.quantity,
+
+            user = user,
+            full_name = user.full_name(),
+
+            previous_location = component.location.name,
+            current_location = list_lpt.department,
+        )
+
+        code = component.code
+        component.delete()
+        order_component = OrderComponent.objects.filter(code=code, list=list_lpt).first()
+
+        # If warehouseman released whole components on list we close the list
+        if len(components_in_list) == 0:
+            order_component.everything_released = True
+            list_lpt.closed = True
+            return {
+                'message':'The list is closed correctly',
+            }
+
+        # If user released whole quantity of this code we change status of this order component in list
+        # This will be useful to check if total quantity of some component already has beed released from list or not yet
+        if not code in [c.code for c in components_in_list]:
+            order_component.everything_released = True
+            return {
+                'message':'You released whole quantity of this component from list',
+            }
+
+
+        return {
+            'message':'Component has been released successfully',
+        }
+
+
+
+
+
 
 
 

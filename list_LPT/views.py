@@ -37,7 +37,10 @@ class ValidateComponentView(APIView):
             },status=404)
 
 class CreateListView(APIView):
+
+    # only users with foreman role or higher are albe to create a list
     permission_classes = [IsAuthenticated, IsForemanOrHigher]
+
     serializer_class = ListLPTSerializer
 
     def post(self, request):
@@ -60,3 +63,25 @@ class CreateListView(APIView):
             return Response({
                 'message': str(e)
             },status=404)
+
+class ReleaseComponentFromListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        list_number = request.data.get('list_number')
+        unique_code = request.data.get('unique_code')
+        user = request.user
+
+        try:
+            result = released_component_from_list(list_number, unique_code, user)
+            return Response(result, status=201)
+
+        except ValueError as e:
+            return Response({
+                'message': str(e)
+            },status=400)
+
+        except NotFound as e:
+            return Response({
+                'message': str(e)
+            }, status=404)

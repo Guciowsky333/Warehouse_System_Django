@@ -14,10 +14,10 @@ class ListLPT(models.Model):
 
 
     list_number = models.CharField(default=generate_number_of_list, unique=True, max_length=10)
-    closed = models.BooleanField(default=False)
     department = models.CharField(max_length=4, choices=DEPARTMENTS)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     date = models.DateField(auto_now_add=True)
+    closed = models.BooleanField(default=False)
 
 
 
@@ -34,5 +34,8 @@ class OrderComponent(models.Model):
     code = models.CharField()
     quantity = models.IntegerField()
 
-    # if whole ordered quantity will be released this field will be True
+    # if whole ordered quantity of this component in list will be released this field will be True
     everything_released = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.code
