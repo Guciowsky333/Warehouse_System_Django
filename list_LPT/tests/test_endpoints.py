@@ -1,6 +1,8 @@
 import pytest
 
+from inventory.models import *
 from list_LPT.models import *
+from history.models import *
 from rest_framework import status
 from rest_framework.test import APIClient
 from rest_framework.exceptions import NotFound
@@ -48,6 +50,8 @@ def test_ValidateComponentView_requires_authentication():
     client = APIClient()
     response = client.get('/api/list_LPT/validate_component/')
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
 
 
 
@@ -176,9 +180,124 @@ def test_CreateListView_requires_authentication():
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
+# Test for /api/list_LPT/release_component_from_list/
+def test_ReleaseComponentFromListView(test_warehouseman, test_list_lpt, test_location):
+    """In this test we assigned 1 OrderComponent model to our list and 2 Component model boxes to our list,
+    and then we send two request to our endpoint first one with the first component and second with the
+    second component, and we check whether our endpoint correctly changes status of OrderComponent and list and
+    if it removed components from warehouse to department"""
 
 
 
+    client = APIClient()
+    client.force_authenticate(test_warehouseman)
 
+
+    order_component_1 = OrderComponent.objects.create(
+        list=test_list_lpt,
+        code = '15016610',
+        quantity = 2000,
+    )
+
+    component_15016610_1 = Component.objects.create(
+        code = '15016610',
+        quantity = 1000,
+        weight = 10,
+        location = test_location,
+        list = test_list_lpt,
+    )
+
+    component_15016610_2 = Component.objects.create(
+        code='15016610',
+        quantity=1000,
+        weight=10,
+        location=test_location,
+        list=test_list_lpt,
+    )
+
+    body1 = {
+        'list_number': test_list_lpt.list_number,
+        'unique_code': component_15016610_1.unique_code,
+    }
+
+    # First request
+    response = client.post('/api/list_LPT/release_component_from_list/', body1, format='json')
+    test_list_lpt.refresh_from_db()
+    order_component_1.refresh_from_db()
+
+    assert response.status_code == status.HTTP_201_CREATED
+
+    # Checking if our component was released correctly from warehouse to department
+    assert not Component.objects.filter(unique_code=component_15016610_1.unique_code).exists()
+    assert ReleasedComponent.objects.filter(
+        unique_code=component_15016610_1.unique_code,
+        department=test_list_lpt.department,
+    ).exists()
+
+    # Checking if this whole proces has been added correctly to history
+    assert ComponentHistory.objects.filter(
+        action = 'component_release',
+        unique_code=component_15016610_1.unique_code,
+        previous_location = component_15016610_1.location.name,
+        current_location = test_list_lpt.department
+    ).exists()
+
+    # We didn't release whole quantity from list so status list and OrderComponent should be still false
+    assert test_list_lpt.closed == False
+    assert order_component_1.everything_released == False
+
+    assert order_component_1.already_released == component_15016610_1.quantity
+
+    # The second request
+    body2 = {
+        'list_number': test_list_lpt.list_number,
+        'unique_code': component_15016610_2.unique_code,
+    }
+    response = client.post('/api/list_LPT/release_component_from_list/', body2, format='json')
+    test_list_lpt.refresh_from_db()
+    order_component_1.refresh_from_db()
+
+    # Now we expected that our list will be closed because we released whole components from our list
+    assert response.status_code == status.HTTP_201_CREATED
+    assert not Component.objects.filter(unique_code=component_15016610_2.unique_code).exists()
+
+    assert order_component_1.everything_released == True
+    assert test_list_lpt.closed == True
+    assert order_component_1.already_released == component_15016610_1.quantity + component_15016610_2.quantity
+
+@pytest.mark.parametrize(
+    'list_number, unique_code, expected_message, expected_status',[
+        # User provided list that has been already closed
+        ('closed_list', 'test_unique_code', 'This list has already been closed', status.HTTP_400_BAD_REQUEST ),
+        # User provided not exist list
+        ('wrong_list', 'test_unique_code', 'List number wrong_list not found', status.HTTP_404_NOT_FOUND ),
+        # User provided not exist component
+        ('test_number', 'wrong_unique_code', 'Component wrong_unique_code not found at stock', status.HTTP_404_NOT_FOUND ),
+        # User provided component that is not at the list
+        ('test_number', 'test_unique_code1', 'This component is not on this list', status.HTTP_400_BAD_REQUEST ),
+
+    ]
+
+)
+def test_ReleaseComponentFromListView_invalid_data(list_number, unique_code, expected_message, expected_status, test_warehouseman,
+                                                   test_list_lpt, test_list_lpt_closed, test_component_on_list, test_component_off_list):
+
+    client = APIClient()
+    client.force_authenticate(test_warehouseman)
+
+    body = {
+        'list_number': list_number,
+        'unique_code': unique_code,
+    }
+    response = client.post('/api/list_LPT/release_component_from_list/', body, format='json')
+
+    assert response.status_code == expected_status
+    assert response.data['message'] == expected_message
+
+
+def test_ReleaseComponentFromListView_requires_authentication():
+    client = APIClient()
+    response = client.post('/api/list_LPT/release_component_from_list/')
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 

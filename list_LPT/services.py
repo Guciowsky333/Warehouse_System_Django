@@ -131,9 +131,11 @@ def released_component_from_list(list_number: str, unique_code: str, user:Custom
             raise ValueError('This component is not on this list')
 
 
-        # We create ReleasedComponent and ComponentHistory with data from our component
-        # and then removing this component from warehouse
 
+        # and then add a quantity of this component to filed already_released in OrderComponent model
+        # adn to the end removing this component from warehouse
+
+        # We create ReleasedComponent and ComponentHistory with data from our component
         ReleasedComponent.objects.create(
             code= component.code,
             unique_code=component.unique_code,
@@ -157,29 +159,39 @@ def released_component_from_list(list_number: str, unique_code: str, user:Custom
             current_location = list_lpt.department,
         )
 
-        code = component.code
+        # We add quantity of this component to filed already_released in OrderComponent model with this code
+        order_component = OrderComponent.objects.filter(code=component.code, list=list_lpt).first()
+        order_component.already_released += component.quantity
+        order_component.save()
+
+
         component.delete()
-        order_component = OrderComponent.objects.filter(code=code, list=list_lpt).first()
 
-        # If warehouseman released whole components on list we close the list
-        if len(components_in_list) == 0:
+        message = 'Component has been released successfully'
+
+
+        # We check whether filed 'already_released' in our ComponentOrder is higher or equal to quantity that user want to order.
+        # This value can be higher because sometimes we can store components with not regular quantity, but they may be the oldest one.
+        # In this case according to FIFO method we assign them to list at first
+        # and this is why we sometimes have to released more than is ordered
+        if order_component.already_released >= order_component.quantity:
             order_component.everything_released = True
+            order_component.save()
+
+            message = 'You released whole quantity of this component from list'
+
+
+        # If all OrderComponents in our list have filed 'everything_released' = True it means that
+        # user released whole component from list so we closed this list
+        if not list_lpt.order_components.filter(everything_released=False).exists():
             list_lpt.closed = True
-            return {
-                'message':'The list is closed correctly',
-            }
+            list_lpt.save()
 
-        # If user released whole quantity of this code we change status of this order component in list
-        # This will be useful to check if total quantity of some component already has beed released from list or not yet
-        if not code in [c.code for c in components_in_list]:
-            order_component.everything_released = True
-            return {
-                'message':'You released whole quantity of this component from list',
-            }
+            message = 'The list was closed correctly'
 
 
         return {
-            'message':'Component has been released successfully',
+            'message': message,
         }
 
 

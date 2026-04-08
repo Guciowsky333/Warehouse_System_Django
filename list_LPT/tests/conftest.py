@@ -1,6 +1,21 @@
 import pytest
 from inventory.models import *
 from users.models import *
+from list_LPT.models import *
+
+
+
+
+@pytest.fixture
+def test_warehouseman(db):
+    return CustomUser.objects.create_user(
+        username="test_username3",
+        password="test_password3",
+        first_name="test_first_name3",
+        last_name="test_last_name3",
+        role="warehouseman",
+    )
+
 
 @pytest.fixture
 def test_user_foreman(db):
@@ -97,3 +112,43 @@ def test_components_15016808(db, test_location):
     )
 
     return component_15016808_1, component_15016808_2
+@pytest.fixture
+def test_component_on_list(db, test_location, test_list_lpt):
+    return Component.objects.create(
+        code= 'test_code',
+        unique_code = 'test_unique_code',
+        quantity = 1000,
+        weight = 10,
+        location = test_location,
+        list=test_list_lpt,
+    )
+
+@pytest.fixture
+def test_component_off_list(db, test_location, test_list_lpt):
+    return Component.objects.create(
+        code= 'test_code',
+        unique_code = 'test_unique_code1',
+        quantity = 1000,
+        weight = 10,
+        location = test_location,
+    )
+
+
+
+
+@pytest.fixture
+def test_list_lpt(db, test_user_foreman):
+    return ListLPT.objects.create(
+        list_number='test_number',
+        user=test_user_foreman,
+        department='5000'
+    )
+
+@pytest.fixture
+def test_list_lpt_closed(db, test_user_foreman):
+    return ListLPT.objects.create(
+        list_number='closed_list',
+        user=test_user_foreman,
+        department='5000',
+        closed = True
+    )

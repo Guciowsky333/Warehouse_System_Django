@@ -34,6 +34,9 @@ class OrderComponent(models.Model):
     code = models.CharField()
     quantity = models.IntegerField()
 
+    # This filed checks how many quantity of this component user already has released
+    already_released = models.IntegerField(default=0)
+
     # if whole ordered quantity of this component in list will be released this field will be True
     everything_released = models.BooleanField(default=False)
 
