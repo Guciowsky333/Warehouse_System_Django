@@ -102,17 +102,20 @@ def test_CreateListView(test_user_foreman, test_components_15016610, test_compon
     order_components_in_list = created_list.order_components.all()
     assert len(order_components_in_list) == 3
 
-    # The first one should be component with code 15016610 and 2000 quantity
+    # The first one should be component with code 15016610 and 2000 quantity and 2 boxes
     assert order_components_in_list[0].code == '15016610'
     assert order_components_in_list[0].quantity == 2000
+    assert order_components_in_list[0].total_boxes == 2
 
-    # The second one should be component with code 15016812 and 1000 quantity
+    # The second one should be component with code 15016812 and 1000 quantity and 3 boxes
     assert order_components_in_list[1].code == '15016812'
     assert order_components_in_list[1].quantity == 1000
+    assert order_components_in_list[1].total_boxes == 3
 
     # The third one should be component with code 15016808 and 2000 quantity
     assert order_components_in_list[2].code == '15016808'
     assert order_components_in_list[2].quantity == 2000
+    assert order_components_in_list[2].total_boxes == 2
 
 
     # Checking whether boxes was added to list correctly according to FIFO method (First in First out)

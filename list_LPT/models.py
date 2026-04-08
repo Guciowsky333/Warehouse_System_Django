@@ -33,6 +33,7 @@ class OrderComponent(models.Model):
     list = models.ForeignKey(ListLPT, on_delete=models.CASCADE, related_name='order_components')
     code = models.CharField()
     quantity = models.IntegerField()
+    total_boxes = models.IntegerField(default=0)
 
     # This filed checks how many quantity of this component user already has released
     already_released = models.IntegerField(default=0)

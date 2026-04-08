@@ -73,15 +73,10 @@ def create_list(order_components:list[Item], department:str, user:CustomUser) ->
                 raise ValueError(f'Code {code} is already on this list you can"t ordered it twice')
 
 
-            OrderComponent.objects.create(
-                list=list_lpt,
-                code=valid_code,
-                quantity=valid_quantity,
-            )
-
             # taking all components with provided code sorted by date (FIFO)
             components = Component.objects.filter(code=valid_code).order_by('production_date')
             total_quantity = 0
+            total_boxes = 0
 
             for component in components:
 
@@ -89,9 +84,18 @@ def create_list(order_components:list[Item], department:str, user:CustomUser) ->
                 # will be higher or equal to quantity that user want to order from warehouse
                 if total_quantity >= valid_quantity:
                     continue
+                total_boxes += 1
+
                 total_quantity += component.quantity
                 component.list = list_lpt
                 component.save()
+
+            OrderComponent.objects.create(
+                list=list_lpt,
+                code=valid_code,
+                quantity=valid_quantity,
+                total_boxes= total_boxes,
+            )
 
     return {
         'message':'List was created successfully',
