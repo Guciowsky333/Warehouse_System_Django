@@ -26,18 +26,21 @@ from rest_framework.exceptions import NotFound
     ]
 )
 def test_ValidateComponentView(code, quantity, expected_status, test_user_foreman, test_components_15016610):
-    """In this test we take  two components with code '15016610' from fixture then we send request to our endpoint
+    """In this test we take 'test_components_15016610' from fixture then we send request to our endpoint
     to check whether it validates code and quantity correctly."""
 
     client = APIClient()
     client.force_authenticate(test_user_foreman)
 
 
-    # total quantity of this both components is 2000
-    component_15016610_1 = test_components_15016610[0]
-    component_15016610_2 = test_components_15016610[1]
+    # total quantity at stock is 3000
 
-    response = client.get(f'/api/list_LPT/validate_component/?code={code}&quantity={quantity}')
+    body = {
+        'code': code,
+        'quantity': quantity,
+    }
+
+    response = client.post(f'/api/list_LPT/validate_component/', body, format='json')
     assert response.status_code == expected_status
 
 def test_ValidateComponentView_user_with_warehouseman_role(test_user_warehouseman):

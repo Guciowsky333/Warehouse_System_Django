@@ -15,9 +15,9 @@ class ValidateComponentView(APIView):
     permission_classes = [IsAuthenticated, IsForemanOrHigher]
 
 
-    def get(self, request):
-        code = request.query_params.get('code')
-        quantity = request.query_params.get('quantity')
+    def post(self, request):
+        code = request.data.get('code')
+        quantity = request.data.get('quantity')
 
         try:
             validate_component(code, quantity)
