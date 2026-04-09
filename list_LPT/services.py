@@ -163,9 +163,14 @@ def released_component_from_list(list_number: str, unique_code: str, user:Custom
             current_location = list_lpt.department,
         )
 
-        # We add quantity of this component to filed already_released in OrderComponent model with this code
         order_component = OrderComponent.objects.filter(code=component.code, list=list_lpt).first()
-        order_component.already_released += component.quantity
+
+        # We add quantity of this component to filed 'already_released_quantity' in OrderComponent model with this code
+        order_component.already_released_quantity += component.quantity
+
+        # And we add 1 box of this component to filed 'already_released_boxes' in OrderComponent model with this code
+        order_component.already_released_boxes += 1
+
         order_component.save()
 
 
@@ -174,11 +179,11 @@ def released_component_from_list(list_number: str, unique_code: str, user:Custom
         message = 'Component has been released successfully'
 
 
-        # We check whether filed 'already_released' in our ComponentOrder is higher or equal to quantity that user want to order.
+        # We check whether filed 'already_released_quantity' in our ComponentOrder is higher or equal to quantity that user want to order.
         # This value can be higher because sometimes we can store components with not regular quantity, but they may be the oldest one.
         # In this case according to FIFO method we assign them to list at first
         # and this is why we sometimes have to released more than is ordered
-        if order_component.already_released >= order_component.quantity:
+        if order_component.already_released_quantity >= order_component.quantity:
             order_component.everything_released = True
             order_component.save()
 
@@ -200,7 +205,14 @@ def released_component_from_list(list_number: str, unique_code: str, user:Custom
 
 
 
+def validate_list(list_number:str) -> ListLPT:
 
+    try:
+        list_lpt = ListLPT.objects.get(list_number=list_number)
+    except ObjectDoesNotExist:
+        raise NotFound(f'List number {list_number} not found')
+
+    return list_lpt
 
 
 

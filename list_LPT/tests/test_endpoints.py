@@ -249,7 +249,8 @@ def test_ReleaseComponentFromListView(test_warehouseman, test_list_lpt, test_loc
     assert test_list_lpt.closed == False
     assert order_component_1.everything_released == False
 
-    assert order_component_1.already_released == component_15016610_1.quantity
+    assert order_component_1.already_released_quantity == component_15016610_1.quantity
+    assert order_component_1.already_released_boxes == 1
 
     # The second request
     body2 = {
@@ -266,7 +267,8 @@ def test_ReleaseComponentFromListView(test_warehouseman, test_list_lpt, test_loc
 
     assert order_component_1.everything_released == True
     assert test_list_lpt.closed == True
-    assert order_component_1.already_released == component_15016610_1.quantity + component_15016610_2.quantity
+    assert order_component_1.already_released_quantity == component_15016610_1.quantity + component_15016610_2.quantity
+    assert order_component_1.already_released_boxes == 2
 
 @pytest.mark.parametrize(
     'list_number, unique_code, expected_message, expected_status',[

@@ -6,7 +6,8 @@ from rest_framework.permissions import IsAuthenticated
 from list_LPT.models import *
 from list_LPT.services import *
 from list_LPT.permissions import IsForemanOrHigher
-from list_LPT.serializers import ListLPTSerializer
+from list_LPT.serializers import ListLPTSerializer, ListLPTDetailSerializer
+
 
 # Create your views here.
 
@@ -85,3 +86,5 @@ class ReleaseComponentFromListView(APIView):
             return Response({
                 'message': str(e)
             }, status=404)
+
+
