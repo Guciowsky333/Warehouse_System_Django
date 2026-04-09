@@ -58,6 +58,9 @@ def create_list(order_components:list[Item], department:str, user:CustomUser) ->
     # we use transaction.atomic() to dont create a listLPT when one of the provided components won't pass validations
     with transaction.atomic():
 
+        if not order_components or not department:
+            raise ValueError('Fields order_components and department are required')
+
         list_lpt = ListLPT.objects.create(
             department=department,
             user=user
@@ -76,7 +79,7 @@ def create_list(order_components:list[Item], department:str, user:CustomUser) ->
             # taking all components with provided code sorted by date (FIFO)
             components = Component.objects.filter(code=valid_code).order_by('production_date')
             total_quantity = 0
-            total_boxes = 0
+            boxes_count = 0
 
             for component in components:
 
@@ -84,7 +87,7 @@ def create_list(order_components:list[Item], department:str, user:CustomUser) ->
                 # will be higher or equal to quantity that user want to order from warehouse
                 if total_quantity >= valid_quantity:
                     continue
-                total_boxes += 1
+                boxes_count += 1
 
                 total_quantity += component.quantity
                 component.list = list_lpt
@@ -94,7 +97,7 @@ def create_list(order_components:list[Item], department:str, user:CustomUser) ->
                 list=list_lpt,
                 code=valid_code,
                 quantity=valid_quantity,
-                total_boxes= total_boxes,
+                total_boxes= boxes_count,
             )
 
     return {
@@ -110,6 +113,9 @@ def released_component_from_list(list_number: str, unique_code: str, user:Custom
     """
 
     with transaction.atomic():
+
+        if not list_number or not unique_code:
+            raise ValueError('Fields list_number and unique_code are required')
 
         try:
             list_lpt = ListLPT.objects.get(list_number=list_number)
@@ -206,6 +212,9 @@ def released_component_from_list(list_number: str, unique_code: str, user:Custom
 
 
 def validate_list(list_number:str) -> ListLPT:
+
+    if not list_number:
+        raise ValueError('Filed list_number are required')
 
     try:
         list_lpt = ListLPT.objects.get(list_number=list_number)

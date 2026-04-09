@@ -6,7 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from list_LPT.models import *
 from list_LPT.services import *
 from list_LPT.permissions import IsForemanOrHigher
-from list_LPT.serializers import ListLPTSerializer, ListLPTDetailSerializer
+from list_LPT.serializers import *
 
 
 # Create your views here.
@@ -87,4 +87,27 @@ class ReleaseComponentFromListView(APIView):
                 'message': str(e)
             }, status=404)
 
+class ListLPTDetailsView(APIView):
+    """This endpoint is used to show users detail about provided list such as
+    how many components are in this list and how many has been released so far, and more"""
 
+
+    permission_classes = [IsAuthenticated]
+    serializer_class = ListLPTDetailsSerializer
+
+    def get(self, request, list_number):
+
+        try:
+            result = validate_list(list_number)
+            serializer = self.serializer_class(result)
+            return Response(serializer.data, status=200)
+
+        except NotFound as e:
+            return Response({
+                'message': str(e)
+            }, status=404)
+
+        except ValueError as e:
+            return Response({
+                'message': str(e)
+            }, status=400)

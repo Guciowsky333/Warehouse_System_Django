@@ -306,3 +306,84 @@ def test_ReleaseComponentFromListView_requires_authentication():
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
+
+
+
+
+# Test for /api/list_LPT/list_detail/
+
+@pytest.mark.parametrize(
+    'list_number, expected_status',[
+
+        # Not exist list
+        ('wrong_number', status.HTTP_404_NOT_FOUND),
+        # Appropriate data
+        ('test_number', status.HTTP_200_OK),
+    ]
+)
+
+
+def test_ListLPTDetailView(list_number, expected_status, test_warehouseman, test_list_lpt):
+    """In this test we assigned two OrderComponent models to our list and check whether endpoint
+    correctly show us details about our list """
+
+    client = APIClient()
+    client.force_authenticate(test_warehouseman)
+
+    order_component_1 = OrderComponent.objects.create(
+        list = test_list_lpt,
+        code = '15016610',
+        quantity = 5000,
+        total_boxes = 5,
+        already_released_boxes = 3,
+        already_released_quantity = 3000,
+
+    )
+
+    order_component_2 = OrderComponent.objects.create(
+        list=test_list_lpt,
+        code='15016808',
+        quantity=3000,
+        total_boxes=3,
+        already_released_boxes=3,
+        already_released_quantity=3000,
+        everything_released=True,
+    )
+
+
+    response = client.get(f'/api/list_LPT/list/{list_number}/details/')
+
+    assert response.status_code == expected_status
+    if expected_status == status.HTTP_200_OK:
+        data = response.json()
+        assert data['user'] == test_list_lpt.user.full_name()
+        assert data['department'] == test_list_lpt.department
+        assert data['closed'] == test_list_lpt.closed
+        assert data['total_boxes_in_list'] == order_component_1.total_boxes + order_component_2.total_boxes
+        assert data['total_boxes_in_list_released'] == order_component_1.already_released_boxes + order_component_2.already_released_boxes
+
+        # We now that first element in 'order_components' filed in this list will be order_component_1 and the second will be
+        # order_component_2 because they are sorted by quantity in serializer.py
+        assert data['order_components'][0]['code'] == order_component_1.code
+        assert data['order_components'][0]['quantity'] == order_component_1.quantity
+        assert data['order_components'][0]['already_released_quantity'] == order_component_1.already_released_quantity
+        assert data['order_components'][0]['total_boxes'] == order_component_1.total_boxes
+        assert data['order_components'][0]['already_released_boxes'] == order_component_1.already_released_boxes
+        assert data['order_components'][0]['everything_released'] == order_component_1.everything_released
+
+        assert data['order_components'][1]['code'] == order_component_2.code
+        assert data['order_components'][1]['quantity'] == order_component_2.quantity
+        assert data['order_components'][1]['already_released_quantity'] == order_component_2.already_released_quantity
+        assert data['order_components'][1]['total_boxes'] == order_component_2.total_boxes
+        assert data['order_components'][1]['already_released_boxes'] == order_component_2.already_released_boxes
+        assert data['order_components'][1]['everything_released'] == order_component_2.everything_released
+
+
+def test_ListLPTDetailView_requires_authentication(test_list_lpt):
+    client = APIClient()
+    response = client.get(f'/api/list_LPT/list/{test_list_lpt.list_number}/details/')
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+
+
