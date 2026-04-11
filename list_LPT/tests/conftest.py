@@ -152,3 +152,15 @@ def test_list_lpt_closed(db, test_user_foreman):
         department='5000',
         closed = True
     )
+
+@pytest.fixture
+def test_location_A10101(db):
+    return Location.objects.create(name='A10101')
+
+@pytest.fixture
+def test_location_A10102(db):
+    return Location.objects.create(name='A10102')
+
+@pytest.fixture
+def test_location_B12103(db):
+    return Location.objects.create(name='B12103')

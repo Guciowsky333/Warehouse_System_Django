@@ -5,5 +5,5 @@ class ComponentSerializer(serializers.ModelSerializer):
     location_name = serializers.CharField(source='location.name')
     class Meta:
         model = Component
-        fields = ['unique_code', 'quantity', 'production_date', 'location_name']
+        fields = ['code', 'unique_code', 'quantity', 'production_date', 'location_name']
 

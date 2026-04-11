@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from list_LPT.models import ListLPT, OrderComponent
 from rest_framework.serializers import ModelSerializer
+from inventory.serializers import ComponentSerializer
 from django.db.models import Sum
 
 class ListLPTSerializer(serializers.Serializer):
@@ -65,6 +66,18 @@ class ListLPTDetailsSerializer(serializers.ModelSerializer):
         return result['total']
 
 
+class PrintListLPTSerializer(serializers.ModelSerializer):
+    components = ComponentSerializer(many=True, read_only=True)
+    date = serializers.DateField(format='%d.%m.%Y')
+
+    class Meta:
+        model = ListLPT
+        fields = [
+            'date',
+            'list_number',
+            'department',
+            'components',
+        ]
 
 
 

@@ -9,4 +9,5 @@ urlpatterns = [
     path('create_list/',CreateListView.as_view(), name='create_list'),
     path('release_component_from_list/',ReleaseComponentFromListView.as_view(), name='release_component_from_list'),
     path('list/<str:list_number>/details/',ListLPTDetailsView.as_view(), name='list_details'),
+    path('list/<str:list_number>/print/',PrintListView.as_view(), name='list_print'),
 ]

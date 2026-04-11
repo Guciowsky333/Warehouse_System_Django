@@ -1,3 +1,5 @@
+import json
+
 import pytest
 
 from inventory.models import *
@@ -6,6 +8,7 @@ from history.models import *
 from rest_framework import status
 from rest_framework.test import APIClient
 from rest_framework.exceptions import NotFound
+from datetime import datetime
 
 # test for /api/list_LPT/validate_component/
 @pytest.mark.parametrize(
@@ -389,4 +392,86 @@ def test_ListLPTDetailView_requires_authentication(test_list_lpt):
 
 
 
+
+# Test for /api/list_LPT/list_print/
+
+@pytest.mark.parametrize(
+    'list_number, expected_status',[
+        ('wrong_number', status.HTTP_404_NOT_FOUND),
+        ('test_number', status.HTTP_200_OK),
+    ]
+)
+
+def test_PrintListView(list_number, expected_status, test_warehouseman, test_list_lpt,
+                       test_location_A10101, test_location_A10102, test_location_B12103):
+    """
+    In this test we assigned 3 components to our list each one with different location, and we
+    check whether our endpoint correctly return to use all of them sorted by location name
+    """
+
+    component_1 = Component.objects.create(
+        code = '15016610',
+        quantity = 1000,
+        weight = 20,
+        location = test_location_B12103,
+        list = test_list_lpt
+    )
+
+    component_2 = Component.objects.create(
+        code='15016808',
+        quantity=1000,
+        weight=10,
+        location=test_location_A10101,
+        list=test_list_lpt
+    )
+
+    component_3 = Component.objects.create(
+        code='15016812',
+        quantity=500,
+        weight=10,
+        location=test_location_A10102,
+        list=test_list_lpt
+    )
+
+    client = APIClient()
+    client.force_authenticate(test_warehouseman)
+
+    response = client.get(f'/api/list_LPT/list/{list_number}/print/')
+
+
+    assert response.status_code == expected_status
+
+    if expected_status == status.HTTP_200_OK:
+        data = response.json()
+        assert data['date'] == test_list_lpt.date.strftime('%d.%m.%Y')
+        assert data['list_number'] == test_list_lpt.list_number
+        assert data['department'] == test_list_lpt.department
+
+
+        # Components should be sorted by location name so we know that first should be
+        # component_2 because it has A10101 location.The second will be component_3 with
+        # A10102 location and the last one should be component_1 with B12103 location name
+        first_component_in_list = data['components'][0]
+        assert first_component_in_list['code'] == component_2.code
+        assert first_component_in_list['quantity'] == component_2.quantity
+        assert first_component_in_list['unique_code'] == component_2.unique_code
+        assert first_component_in_list['location_name'] == component_2.location.name
+
+        second_component_in_list = data['components'][1]
+        assert second_component_in_list['code'] == component_3.code
+        assert second_component_in_list['quantity'] == component_3.quantity
+        assert second_component_in_list['unique_code'] == component_3.unique_code
+        assert second_component_in_list['location_name'] == component_3.location.name
+
+        third_component_in_list = data['components'][2]
+        assert third_component_in_list['code'] == component_1.code
+        assert third_component_in_list['quantity'] == component_1.quantity
+        assert third_component_in_list['unique_code'] == component_1.unique_code
+        assert third_component_in_list['location_name'] == component_1.location.name
+
+
+def test_PrintListView_requires_authentication(test_list_lpt):
+    client = APIClient()
+    response = client.get(f'/api/list_LPT/list/{test_list_lpt.list_number}/print/')
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 

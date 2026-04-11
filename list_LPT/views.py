@@ -111,3 +111,34 @@ class ListLPTDetailsView(APIView):
             return Response({
                 'message': str(e)
             }, status=400)
+
+
+
+
+
+class PrintListView(APIView):
+    """
+    This endpoint is used to print whole physical list on the warehouse
+
+    It will be useful for the warehouse workers to have physical list with all components
+    that they have to release sorted by location
+    """
+    permission_classes = [IsAuthenticated]
+    serializer_class = PrintListLPTSerializer
+
+    def get(self, request, list_number):
+
+        try:
+            result = get_optimize_list(list_number)
+            serializer = self.serializer_class(result)
+            return Response(serializer.data, status=200)
+
+        except NotFound as e:
+            return Response({
+                'message': str(e)
+            }, status=404)
+
+        except ValueError as e:
+            return Response({
+                'message': str(e)
+            }, status=400)

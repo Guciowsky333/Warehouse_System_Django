@@ -4,7 +4,8 @@ from rest_framework.exceptions import NotFound
 from inventory.models import Component, ReleasedComponent
 from users.models import CustomUser
 from history.models import ComponentHistory
-from django.db.models import Sum
+from django.db.models import Sum, Prefetch
+
 from typing import TypedDict
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
@@ -220,6 +221,22 @@ def validate_list(list_number:str) -> ListLPT:
         list_lpt = ListLPT.objects.get(list_number=list_number)
     except ObjectDoesNotExist:
         raise NotFound(f'List number {list_number} not found')
+
+    return list_lpt
+
+def get_optimize_list(list_number:str) -> ListLPT:
+    """
+    Returns list with prefetched components and their location to avoid N+1 queries
+    """
+
+    validate_list(list_number)
+
+    list_lpt = ListLPT.objects.prefetch_related(
+        Prefetch(
+            'components',
+            queryset=Component.objects.select_related('location').order_by('location__name'),
+        )
+    ).get(list_number=list_number)
 
     return list_lpt
 
