@@ -224,7 +224,33 @@ def validate_list(list_number:str) -> ListLPT:
 
     return list_lpt
 
-def get_optimize_list(list_number:str) -> ListLPT:
+def get_optimize_list_order_components(list_number:str) -> ListLPT:
+    """
+    Returns list with prefetched order components and create 2 new fields in our list
+    """
+
+    validate_list(list_number)
+
+    list_lpt = ListLPT.objects.prefetch_related(
+        Prefetch(
+            'order_components',
+            OrderComponent.objects.order_by('-quantity')
+        )
+    ).get(list_number=list_number)
+
+    # We assigned two new fields into our list total_boxes_in_list and total_boxes_in_list_released
+    # to avoid N+1 queries later
+    list_lpt.total_boxes_in_list = sum(
+        order_component.total_boxes for order_component in list_lpt.order_components.all()
+    )
+
+    list_lpt.total_boxes_in_list_released = sum(
+        order_component.already_released_boxes for order_component in list_lpt.order_components.all()
+    )
+
+    return list_lpt
+
+def get_optimize_list_components(list_number:str) -> ListLPT:
     """
     Returns list with prefetched components and their location to avoid N+1 queries
     """

@@ -98,7 +98,7 @@ class ListLPTDetailsView(APIView):
     def get(self, request, list_number):
 
         try:
-            result = validate_list(list_number)
+            result = get_optimize_list_order_components(list_number)
             serializer = self.serializer_class(result)
             return Response(serializer.data, status=200)
 
@@ -129,7 +129,7 @@ class PrintListView(APIView):
     def get(self, request, list_number):
 
         try:
-            result = get_optimize_list(list_number)
+            result = get_optimize_list_components(list_number)
             serializer = self.serializer_class(result)
             return Response(serializer.data, status=200)
 
