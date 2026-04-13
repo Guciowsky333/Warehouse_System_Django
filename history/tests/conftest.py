@@ -4,13 +4,13 @@ from users.models import *
 @pytest.fixture
 def test_location(db):
     return Location.objects.create(
-        name="test_location",
+        name="A10101",
     )
 
 @pytest.fixture
 def test_location2(db):
     return Location.objects.create(
-        name="test_location2",
+        name="A10102",
     )
 
 
@@ -18,8 +18,8 @@ def test_location2(db):
 @pytest.fixture
 def test_component(db, test_location):
     return Component.objects.create(
-        code="test_code",
-        unique_code='test_unique_code',
+        code="code",
+        unique_code='unique_code',
         weight=10,
         quantity=500,
         location=test_location,

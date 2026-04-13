@@ -49,6 +49,7 @@ def validate_component(code, quantity):
 class Item(TypedDict):
     code : str
     quantity : int
+
 def create_list(order_components:list[Item], department:str, user:CustomUser) -> dict:
     """
     This function creates a list to provided department and create OrderComponent model with components

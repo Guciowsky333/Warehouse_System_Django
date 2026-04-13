@@ -24,11 +24,11 @@ def test_manager(db):
 
 @pytest.fixture
 def test_location(db):
-    return Location.objects.create(name="test_location")
+    return Location.objects.create(name="A10101")
 
 @pytest.fixture
 def test_location2(db):
-    return Location.objects.create(name="test_location2")
+    return Location.objects.create(name="A10102")
 
 @pytest.fixture
 def test_location_EXTC(db):
@@ -38,8 +38,8 @@ def test_location_EXTC(db):
 @pytest.fixture
 def test_component(db, test_location):
     return Component.objects.create(
-        code="test_component",
-        unique_code="test_unique_code",
+        code="test_code",
+        unique_code="unique_code_1",
         location=test_location,
         weight=20,
         quantity=1000,
@@ -47,8 +47,8 @@ def test_component(db, test_location):
 @pytest.fixture
 def test_component2(db, test_location2):
     return Component.objects.create(
-        code="test_component2",
-        unique_code="test_unique_code2",
+        code="test_code2",
+        unique_code="unique_code_2",
         location=test_location2,
         weight=25,
         quantity=500,
@@ -56,22 +56,23 @@ def test_component2(db, test_location2):
 @pytest.fixture
 def test_released_component(db):
     return ReleasedComponent.objects.create(
-        code="test_released_component",
-        unique_code="test_released_unique_code",
-        department="test_department",
+        code="test_code3",
+        unique_code="unique_code_3",
+        department="5000",
         weight=20,
         quantity=1000,
     )
 
+
 @pytest.fixture
 def test_location_for_models(db):
-    return Location.objects.create(name="test_location")
+    return Location.objects.create(name="D10703")
 
 
 @pytest.fixture
 def test_component_for_models(db, test_location_for_models):
     return Component.objects.create(
-        code="test_component",
+        code="code",
         location=test_location_for_models,
         weight=20,
         quantity=1000
@@ -79,7 +80,7 @@ def test_component_for_models(db, test_location_for_models):
 @pytest.fixture
 def test_component2_for_models(db, test_location_for_models):
     return Component.objects.create(
-        code="test_complement",
+        code="code",
         location=test_location_for_models,
         weight=30,
         quantity=500,

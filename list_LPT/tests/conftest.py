@@ -39,11 +39,11 @@ def test_user_warehouseman(db):
 
 @pytest.fixture
 def test_location(db):
-    return Location.objects.create(name='test_location')
+    return Location.objects.create(name='A10101')
 
 @pytest.fixture
 def test_location2(db):
-    return Location.objects.create(name='test_location2')
+    return Location.objects.create(name='A10102')
 
 
 @pytest.fixture
@@ -116,7 +116,7 @@ def test_components_15016808(db, test_location):
 def test_component_on_list(db, test_location, test_list_lpt):
     return Component.objects.create(
         code= 'test_code',
-        unique_code = 'test_unique_code',
+        unique_code ='unique_code_1',
         quantity = 1000,
         weight = 10,
         location = test_location,
@@ -127,7 +127,7 @@ def test_component_on_list(db, test_location, test_list_lpt):
 def test_component_off_list(db, test_location, test_list_lpt):
     return Component.objects.create(
         code= 'test_code',
-        unique_code = 'test_unique_code1',
+        unique_code ='unique_code_2',
         quantity = 1000,
         weight = 10,
         location = test_location,
@@ -139,7 +139,7 @@ def test_component_off_list(db, test_location, test_list_lpt):
 @pytest.fixture
 def test_list_lpt(db, test_user_foreman):
     return ListLPT.objects.create(
-        list_number='test_number',
+        list_number='number_1',
         user=test_user_foreman,
         department='5000'
     )
@@ -147,7 +147,7 @@ def test_list_lpt(db, test_user_foreman):
 @pytest.fixture
 def test_list_lpt_closed(db, test_user_foreman):
     return ListLPT.objects.create(
-        list_number='closed_list',
+        list_number='number_2',
         user=test_user_foreman,
         department='5000',
         closed = True

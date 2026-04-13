@@ -11,8 +11,8 @@ from history.models import *
 # Test for api/history/by_code/
 @pytest.mark.parametrize(
     'query_params', [
-        ('?code=test_code'),
-        ('?unique_code=test_unique_code'),
+        ('?code=code'),
+        ('?unique_code=unique_code'),
         ('?user_name=test user')
     ],
 )
@@ -155,7 +155,7 @@ def test_history_with_action(action, test_user, test_location, test_location2, t
         # Code that doesnt exist
         ('wrong_code', 'change_location',status.HTTP_404_NOT_FOUND),
         # Wrong action
-        ('test_code', 'wrong_action',status.HTTP_404_NOT_FOUND),
+        ('code', 'wrong_action',status.HTTP_404_NOT_FOUND),
 
     ]
 )

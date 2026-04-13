@@ -279,13 +279,13 @@ def test_ReleaseComponentFromListView(test_warehouseman, test_list_lpt, test_loc
 @pytest.mark.parametrize(
     'list_number, unique_code, expected_message, expected_status',[
         # User provided list that has been already closed
-        ('closed_list', 'test_unique_code', 'This list has already been closed', status.HTTP_400_BAD_REQUEST ),
+        ('number_2', 'unique_code_1', 'This list has already been closed', status.HTTP_400_BAD_REQUEST ),
         # User provided not exist list
-        ('wrong_list', 'test_unique_code', 'List number wrong_list not found', status.HTTP_404_NOT_FOUND ),
+        ('wrong_list', 'unique_code_1', 'List number wrong_list not found', status.HTTP_404_NOT_FOUND ),
         # User provided not exist component
-        ('test_number', 'wrong_unique_code', 'Component wrong_unique_code not found at stock', status.HTTP_404_NOT_FOUND ),
+        ('number_1', 'wrong_unique_code', 'Component wrong_unique_code not found at stock', status.HTTP_404_NOT_FOUND ),
         # User provided component that is not at the list
-        ('test_number', 'test_unique_code1', 'This component is not on this list', status.HTTP_400_BAD_REQUEST ),
+        ('number_1', 'unique_code_2', 'This component is not on this list', status.HTTP_400_BAD_REQUEST ),
 
     ]
 
@@ -324,7 +324,7 @@ def test_ReleaseComponentFromListView_requires_authentication():
         # Not exist list
         ('wrong_number', status.HTTP_404_NOT_FOUND),
         # Appropriate data
-        ('test_number', status.HTTP_200_OK),
+        ('number_1', status.HTTP_200_OK),
     ]
 )
 
@@ -398,7 +398,7 @@ def test_ListLPTDetailView_requires_authentication(test_list_lpt):
 @pytest.mark.parametrize(
     'list_number, expected_status',[
         ('wrong_number', status.HTTP_404_NOT_FOUND),
-        ('test_number', status.HTTP_200_OK),
+        ('number_1', status.HTTP_200_OK),
     ]
 )
 

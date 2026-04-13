@@ -1,4 +1,4 @@
-from platform import android_ver
+
 
 import pytest
 from inventory.models import Location, Component, ReleasedComponent
@@ -14,17 +14,17 @@ from history.models import ComponentHistory
     'payload, expected_status', [
 
         # User provided empty unique_code
-        ({'unique_code':'', 'location':'test_location2'}, status.HTTP_400_BAD_REQUEST),
+        ({'unique_code':'', 'location':'A10102'}, status.HTTP_400_BAD_REQUEST),
         # User provided empty location
-        ({'unique_code':'test_unique_code', 'location':''}, status.HTTP_400_BAD_REQUEST),
+        ({'unique_code':'unique_code_1', 'location':''}, status.HTTP_400_BAD_REQUEST),
         # User provided unique code that dont exist
-        ({'unique_code':'wrong_unique_code', 'location':'test_location2'}, status.HTTP_404_NOT_FOUND),
+        ({'unique_code':'wrong_unique_code', 'location':'A10102'}, status.HTTP_404_NOT_FOUND),
         # User provided location that dont exist
-        ({'unique_code':'test_unique_code', 'location':'wrong_location'}, status.HTTP_404_NOT_FOUND),
+        ({'unique_code':'unique_code_1', 'location':'wrong_location'}, status.HTTP_404_NOT_FOUND),
         # Status "4" means - User provided unique code that has been already released to production
-        ({'unique_code':'test_released_unique_code', 'location':'test_location2'}, status.HTTP_400_BAD_REQUEST),
+        ({'unique_code':'unique_code_3', 'location':'A10102'}, status.HTTP_400_BAD_REQUEST),
         # Appropriate data
-        ({'unique_code':'test_unique_code', 'location':'test_location2'}, status.HTTP_200_OK),
+        ({'unique_code':'unique_code_1', 'location':'A10102'}, status.HTTP_200_OK),
     ]
 )
 
@@ -39,7 +39,7 @@ def test_ChangeLocationView(payload, expected_status, test_component,test_locati
 
     # checking if our test component has been added to our test location correctly
     if expected_status == status.HTTP_200_OK:
-        assert test_location2.components.filter(unique_code="test_unique_code").exists()
+        assert test_location2.components.filter(unique_code="unique_code_1").exists()
 
 
         # checking if this action was added correctly in our history
@@ -72,11 +72,8 @@ def test_ChangeLocationView_max_weight(test_location2, test_component, test_user
     client = APIClient()
     client.force_authenticate(test_user)
 
-
-
-    Component.objects.create(
-        code="heavy_component",
-        unique_code="heavy_unique_code",
+    heavy_component = Component.objects.create(
+        code="test_code",
         location=test_location2,
         weight=790,
         quantity=1000,
@@ -85,8 +82,8 @@ def test_ChangeLocationView_max_weight(test_location2, test_component, test_user
     test_location2.refresh_from_db()
 
     body = {
-        'unique_code': 'test_unique_code',
-        'location': 'test_location2'
+        'unique_code': heavy_component.unique_code,
+        'location': test_location2.name,
     }
 
     response = client.patch('/api/inventory/change_location/', body, format='json')
@@ -111,15 +108,15 @@ def test_ChangeLocationView_max_weight(test_location2, test_component, test_user
         # Empty unique code
         ({'unique_code':'', 'department':'5500'}, status.HTTP_400_BAD_REQUEST),
         # Empty department
-        ({'unique_code':'test_unique_code', 'department':''}, status.HTTP_400_BAD_REQUEST),
+        ({'unique_code':'unique_code_1', 'department':''}, status.HTTP_400_BAD_REQUEST),
         # User provided wrong department allows [5000, 5500, 5800, 6000]
-        ({'unique_code':'test_unique_code', 'department':'wrong_department'}, status.HTTP_400_BAD_REQUEST),
+        ({'unique_code':'unique_code_1', 'department':'wrong_department'}, status.HTTP_400_BAD_REQUEST),
         # Status "4" means - User provided unique code that has been already released to production
-        ({'unique_code':'test_released_unique_code', 'department':'5500'}, status.HTTP_400_BAD_REQUEST),
+        ({'unique_code':'unique_code_3', 'department':'5500'}, status.HTTP_400_BAD_REQUEST),
         # User provided unique code that not belong to any components
         ({'unique_code':'wrong_unique_code', 'department':'5500'}, status.HTTP_404_NOT_FOUND),
         # Appropriate data
-        ({'unique_code':'test_unique_code', 'department':'5500'}, status.HTTP_201_CREATED),
+        ({'unique_code':'unique_code_1', 'department':'5500'}, status.HTTP_201_CREATED),
 
     ]
 )
@@ -177,7 +174,7 @@ def test_ReleasedComponentView_requires_authentication():
         # Not exist location
         ('wrong_location', status.HTTP_404_NOT_FOUND),
         # Appropriate data
-        ('test_location', status.HTTP_200_OK),
+        ('A10101', status.HTTP_200_OK),
     ]
 )
 
@@ -273,7 +270,6 @@ def test_CheckComponentView(code, expected_status,test_location,test_location2, 
 
     older_component = Component.objects.create(
         code='15016812',
-        unique_code='older_component_unique_code',
         location=test_location,
         quantity=1000,
         weight=20,
@@ -281,7 +277,6 @@ def test_CheckComponentView(code, expected_status,test_location,test_location2, 
 
     younger_component = Component.objects.create(
         code='15016812',
-        unique_code='younger_component_unique_code',
         location=test_location2,
         quantity=500,
         weight=10,
@@ -305,11 +300,11 @@ def test_CheckComponentView(code, expected_status,test_location,test_location2, 
         component_1, component_2 = response.data['components']
 
         # We expect that first component will be the older one
-        assert component_1['unique_code'] == 'older_component_unique_code'
+        assert component_1['unique_code'] == older_component.unique_code
         assert component_1['location_name'] == test_location.name
 
         # And the second one will be younger
-        assert component_2['unique_code'] == 'younger_component_unique_code'
+        assert component_2['unique_code'] == younger_component.unique_code
         assert component_2['location_name'] == test_location2.name
 
 def test_CheckComponentView_requires_authentication():
@@ -487,15 +482,15 @@ def test_ShowQuantityInStockView_requires_authentication(test_user):
 @pytest.mark.parametrize(
     'payload, expected_status', [
         # Empty unique_code
-        ({'unique_code':'','location':'test_location'}, status.HTTP_400_BAD_REQUEST),
+        ({'unique_code':'','location':'A10101'}, status.HTTP_400_BAD_REQUEST),
         # Empty location
-        ({'unique_code':'test_released_unique_code','location':''}, status.HTTP_400_BAD_REQUEST),
+        ({'unique_code':'unique_code_3','location':''}, status.HTTP_400_BAD_REQUEST),
         # not exist unique_code
-        ({'unique_code':'wrong_unique_code','location':'test_location'}, status.HTTP_404_NOT_FOUND),
+        ({'unique_code':'wrong_unique_code','location':'A10101'}, status.HTTP_404_NOT_FOUND),
         # not exist location
-        ({'unique_code':'test_released_unique_code','location':'wrong_location'}, status.HTTP_404_NOT_FOUND),
+        ({'unique_code':'unique_code_3','location':'wrong_location'}, status.HTTP_404_NOT_FOUND),
         # Appropriate data
-        ({'unique_code':'test_released_unique_code','location':'test_location'}, status.HTTP_201_CREATED),
+        ({'unique_code':'unique_code_3','location':'A10101'}, status.HTTP_201_CREATED),
     ]
 )
 
@@ -512,10 +507,10 @@ def test_UndoComponentView(payload, expected_status, test_user, test_released_co
     assert response.status_code == expected_status
 
     if expected_status == status.HTTP_201_CREATED:
-        assert not ReleasedComponent.objects.filter(unique_code='test_released_unique_code').exists()
+        assert not ReleasedComponent.objects.filter(unique_code=test_released_component.unique_code).exists()
 
 
-        component = Component.objects.get(unique_code='test_released_unique_code')
+        component = Component.objects.get(unique_code=test_released_component.unique_code)
         assert component.code == test_released_component.code
         assert component.unique_code == test_released_component.unique_code
         assert component.weight == test_released_component.weight
@@ -542,13 +537,18 @@ def test_UndoComponentView(payload, expected_status, test_user, test_released_co
 
 
 def test_UndoComponentView_max_weight(test_user, test_location, test_released_component):
+    """
+    In this test we assign a component with 790 kg weight to our location
+    So when we try undo our component to this location the endpoint should not allow us to do that
+    because location will be too heavy
+    """
 
     client = APIClient()
     client.force_authenticate(test_user)
 
+
     Component.objects.create(
-        code='heavy_component',
-        unique_code='unique_code',
+        code='test_code',
         location=test_location,
         weight=790,
         quantity=1000,
