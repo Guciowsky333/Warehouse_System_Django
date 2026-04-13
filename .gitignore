@@ -3,4 +3,5 @@
 __pycache__
 *.pyc
 data.json
+db.sqlite3
 *.log
