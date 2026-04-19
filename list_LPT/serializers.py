@@ -79,7 +79,7 @@ class ListLPTDetailsSerializer(serializers.ModelSerializer):
 
 class PrintListLPTSerializer(serializers.ModelSerializer):
     components = ComponentSerializer(many=True, read_only=True)
-    date = serializers.DateField(format='%d.%m.%Y')
+    date = serializers.DateTimeField(format='%d.%m.%Y %H:%M')
 
     class Meta:
         model = ListLPT

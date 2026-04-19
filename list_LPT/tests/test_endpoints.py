@@ -485,7 +485,7 @@ def test_PrintListView(list_number, expected_status, test_warehouseman, test_lis
 
     if expected_status == status.HTTP_200_OK:
         data = response.json()
-        assert data['date'] == test_list_lpt.date.strftime('%d.%m.%Y')
+        assert data['date'] == test_list_lpt.date.strftime('%d.%m.%Y %H:%M')
         assert data['list_number'] == test_list_lpt.list_number
         assert data['department'] == test_list_lpt.department
 

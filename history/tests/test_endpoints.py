@@ -39,7 +39,7 @@ def test_history_without_action(query_params, test_user, test_location,test_loca
     released_component = ComponentHistory.objects.create(
         action='component_release',
         code=test_component.code,
-        unique_code=test_component.unique_code,
+        unique_code = test_component.unique_code,
         weight=test_component.weight,
         quantity=test_component.quantity,
         user=test_user,
@@ -51,7 +51,7 @@ def test_history_without_action(query_params, test_user, test_location,test_loca
     undo_component = ComponentHistory.objects.create(
         action='component_undo',
         code=test_component.code,
-        unique_code=test_component.unique_code,
+        unique_code = test_component.unique_code,
         weight=test_component.weight,
         quantity=test_component.quantity,
         user=test_user,
@@ -63,13 +63,13 @@ def test_history_without_action(query_params, test_user, test_location,test_loca
     client = APIClient()
     client.force_authenticate(user=test_user)
 
-    response = client.get(f'/api/history/{query_params}&action=')
+    response = client.get(f'/api/history/{query_params}&action=&page=1')
 
     assert response.status_code == status.HTTP_200_OK
 
     # The order should be sorted by the mose recent date so it should look lik this :
     # 1.undo_component - 2.released_component - 3.change_location
-    first_element, second_element, third_element = response.data['history']
+    first_element, second_element, third_element = response.data['results']
     assert first_element['action'] == undo_component.action
     assert second_element['action'] == released_component.action
     assert third_element['action'] == change_location.action
@@ -129,23 +129,22 @@ def test_history_with_action(action, test_user, test_location, test_location2, t
     client = APIClient()
     client.force_authenticate(user=test_user)
 
-    response = client.get(f'/api/history/?code={test_component.code}&action={action}')
+    response = client.get(f'/api/history/?code={test_component.code}&action={action}&page=1')
 
     assert response.status_code == status.HTTP_200_OK
 
 
     # In each case our history should storage only one model ComponentHistory with provided action
-    assert len(response.data['history']) == 1
+    assert len(response.data['results']) == 1
+
+    result = response.data['results'][0]
     if action == 'change_location':
-        result = response.data['history'][0]
         assert result['action'] == change_location.action
 
     if action == 'component_release':
-        result = response.data['history'][0]
         assert result['action'] == released_component.action
 
     if action == 'component_undo':
-        result = response.data['history'][0]
         assert result['action'] == undo_component.action
 
 @pytest.mark.parametrize(

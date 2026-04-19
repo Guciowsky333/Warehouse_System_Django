@@ -23,9 +23,9 @@ class ShowAllListLPTAPIView(APIView):
 
         paginator = PageNumberPagination()
         paginator.page_size = 10
-        result = paginator.paginate_queryset(queryset, request)
+        page = paginator.paginate_queryset(queryset, request)
 
-        serializer = self.serializer_class(result, many=True)
+        serializer = self.serializer_class(page, many=True)
 
         return paginator.get_paginated_response(serializer.data)
 

@@ -7,6 +7,7 @@ from rest_framework.exceptions import NotFound
 from history.models import ComponentHistory
 from history.serializers import ComponentHistorySerializer
 from history.services import *
+from rest_framework.pagination import PageNumberPagination
 # Create your views here.
 
 
@@ -24,12 +25,17 @@ class ComponentsHistoryView(APIView):
             result = history(code, unique_code, user_name, action)
             message, queryset = result['message'], result['history']
 
-            serializer = ComponentHistorySerializer(queryset, many=True)
+            paginator = PageNumberPagination()
+            paginator.page_size = 20
+            page = paginator.paginate_queryset(queryset, request)
 
-            return Response({
-                'message': message,
-                'history': serializer.data
-            })
+            serializer = ComponentHistorySerializer(page, many=True)
+
+            response = paginator.get_paginated_response(serializer.data)
+            response.data['message'] = message
+
+            return response
+
 
 
         except NotFound as e:
