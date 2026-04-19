@@ -283,21 +283,21 @@ def test_CheckComponentView(code, expected_status,test_location,test_location2, 
     )
 
     # Now we overwrite date of that two components the first one will be older and the second will be younger
-    # So the older component should be first in endpoint response according to FIFO (first in first out)
+    # So the older component should be first in endpoint response according to FIFO (First in First out)
     older_component.production_date = date(2020, 1, 1)
 
 
     younger_component.production_date = date(2021, 1, 1)
 
-    response = client.get(f'/api/inventory/check_component/?code={code}')
+    response = client.get(f'/api/inventory/check_component/?code={code}&page=1')
 
     assert response.status_code == expected_status
 
     if expected_status == status.HTTP_200_OK:
-        assert response.data['message'] == f'All locations for component {code}'
-        assert len(response.data['components']) == 2
+        components = response.data['results']
+        assert len(components) == 2
 
-        component_1, component_2 = response.data['components']
+        component_1, component_2 = components
 
         # We expect that first component will be the older one
         assert component_1['unique_code'] == older_component.unique_code

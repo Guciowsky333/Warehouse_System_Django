@@ -7,6 +7,7 @@ from list_LPT.models import *
 from list_LPT.services import *
 from list_LPT.permissions import IsForemanOrHigher
 from list_LPT.serializers import *
+from rest_framework.pagination import PageNumberPagination
 
 
 # Create your views here.
@@ -16,9 +17,20 @@ class ShowAllListLPTAPIView(APIView):
     serializer_class = ListLPTSerializer
 
     def get(self, request):
-        lists = show_all_list()
-        serializer = self.serializer_class(lists, many=True)
-        return Response(serializer.data, status=200)
+        queryset = ListLPT.objects.all().order_by('-date')
+
+        # We use pagination here because in the future we can have a lot of lists in the database
+
+        paginator = PageNumberPagination()
+        paginator.page_size = 10
+        result = paginator.paginate_queryset(queryset, request)
+
+        serializer = self.serializer_class(result, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
+
+
+
 
 
 

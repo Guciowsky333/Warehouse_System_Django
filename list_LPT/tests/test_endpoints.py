@@ -31,9 +31,11 @@ def test_ShowAllListLPTAPIView(test_warehouseman, test_user_foreman):
         user=test_user_foreman,
     )
 
-    response = client.get('/api/list_LPT/show_all/')
+    response = client.get('/api/list_LPT/show_all/?page=1')
     assert response.status_code == status.HTTP_200_OK
-    data = response.data
+
+
+    data = response.data['results']
 
     # We know that first element will be list_2 because it is a younger list
     first_element = data[0]

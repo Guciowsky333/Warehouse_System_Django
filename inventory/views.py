@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework.exceptions import NotFound
 from inventory.serializers import ComponentSerializer
 from users.permissions import IsManager
-
+from rest_framework.pagination import PageNumberPagination
 from users import permissions
 
 
@@ -98,12 +98,15 @@ class CheckComponentView(APIView):
         code = request.query_params.get('code')
 
         try:
-            components = check_component(code)
-            serializer = self.serializer_class(components, many=True)
-            return Response({
-                "message":f'All locations for component {code}',
-                'components':serializer.data,
-            }, status=200)
+            # We use pagination here because in the stock we can have a lot of components
+            queryset = check_component(code)
+
+            paginator = PageNumberPagination()
+            paginator.page_size = 10
+            result = paginator.paginate_queryset(queryset, request)
+            serializer = self.serializer_class(result, many=True)
+
+            return paginator.get_paginated_response(serializer.data)
 
         except ValueError as e:
             return Response({
@@ -126,9 +129,10 @@ class CheckComponentGroupedView(APIView):
         try:
             components = check_component_grouped(code)
             return Response({
-                "message":f'All locations for component {code}',
-                "components":list(components)
+                "message": f'All locations for component {code}',
+                "components": list(components)
             }, status=200)
+
 
         except ValueError as e:
             return Response({
