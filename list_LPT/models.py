@@ -16,7 +16,7 @@ class ListLPT(models.Model):
     list_number = models.CharField(default=generate_number_of_list, unique=True, max_length=10)
     department = models.CharField(max_length=4, choices=DEPARTMENTS)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    date = models.DateField(auto_now_add=True)
+    date = models.DateTimeField(auto_now_add=True)
     closed = models.BooleanField(default=False)
 
 

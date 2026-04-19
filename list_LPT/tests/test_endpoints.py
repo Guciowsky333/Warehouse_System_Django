@@ -10,7 +10,46 @@ from rest_framework.test import APIClient
 from rest_framework.exceptions import NotFound
 from datetime import datetime
 
-# test for /api/list_LPT/validate_component/
+# Test for /api/list_LPT/show_all/
+def test_ShowAllListLPTAPIView(test_warehouseman, test_user_foreman):
+    """
+    In this test we create a 2 list, and we expect that our endpoint returns this lists
+    sorted by date descending
+    """
+
+    client = APIClient()
+    client.force_authenticate(user=test_warehouseman)
+
+    list_1 = ListLPT.objects.create(
+        department = '5000',
+        user = test_user_foreman,
+    )
+
+
+    list_2 = ListLPT.objects.create(
+        department='5500',
+        user=test_user_foreman,
+    )
+
+    response = client.get('/api/list_LPT/show_all/')
+    assert response.status_code == status.HTTP_200_OK
+    data = response.data
+
+    # We know that first element will be list_2 because it is a younger list
+    first_element = data[0]
+    assert first_element['list_number'] == list_2.list_number
+    assert first_element['department'] == list_2.department
+    assert first_element['user'] == list_2.user.full_name()
+    assert first_element['closed'] == list_2.closed
+
+    # And the second element will be list_1 because it is older one
+    second_element = data[1]
+    assert second_element['list_number'] == list_1.list_number
+    assert second_element['department'] == list_1.department
+    assert second_element['user'] == list_1.user.full_name()
+    assert second_element['closed'] == list_1.closed
+
+# Test for /api/list_LPT/validate_component/
 @pytest.mark.parametrize(
     'code, quantity, expected_status',[
         # Empty code
@@ -362,6 +401,7 @@ def test_ListLPTDetailView(list_number, expected_status, test_warehouseman, test
     assert response.status_code == expected_status
     if expected_status == status.HTTP_200_OK:
         data = response.json()
+        assert data['list_number'] == list_number
         assert data['user'] == test_list_lpt.user.full_name()
         assert data['department'] == test_list_lpt.department
         assert data['closed'] == test_list_lpt.closed

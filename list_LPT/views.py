@@ -10,6 +10,21 @@ from list_LPT.serializers import *
 
 
 # Create your views here.
+class ShowAllListLPTAPIView(APIView):
+
+    permission_classes = [IsAuthenticated]
+    serializer_class = ListLPTSerializer
+
+    def get(self, request):
+        lists = show_all_list()
+        serializer = self.serializer_class(lists, many=True)
+        return Response(serializer.data, status=200)
+
+
+
+
+
+
 
 class ValidateComponentView(APIView):
     permission_classes = [IsAuthenticated, IsForemanOrHigher]
@@ -42,7 +57,7 @@ class CreateListView(APIView):
     # only users with foreman role or higher are albe to create a list
     permission_classes = [IsAuthenticated, IsForemanOrHigher]
 
-    serializer_class = ListLPTSerializer
+    serializer_class = ListLPTCreateSerializer
 
     def post(self, request):
         components = request.data.get('components')
@@ -64,6 +79,8 @@ class CreateListView(APIView):
             return Response({
                 'message': str(e)
             },status=404)
+
+
 
 class ReleaseComponentFromListView(APIView):
     permission_classes = [IsAuthenticated]

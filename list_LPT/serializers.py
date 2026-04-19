@@ -4,7 +4,20 @@ from rest_framework.serializers import ModelSerializer
 from inventory.serializers import ComponentSerializer
 from django.db.models import Sum
 
-class ListLPTSerializer(serializers.Serializer):
+
+class ListLPTSerializer(serializers.ModelSerializer):
+    user = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ListLPT
+        fields = ['list_number' , 'department', 'user', 'closed']
+
+    def get_user(self, obj):
+        return obj.user.full_name()
+
+
+
+class ListLPTCreateSerializer(serializers.Serializer):
     """
     This serializer is used to validation department that user provided in body
     """
@@ -38,6 +51,7 @@ class ListLPTDetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = ListLPT
         fields = [
+            'list_number',
             'user',
             'department',
             'date',

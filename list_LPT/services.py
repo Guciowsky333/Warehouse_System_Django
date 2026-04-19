@@ -10,6 +10,11 @@ from typing import TypedDict
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
 
+
+def show_all_list():
+    return ListLPT.objects.all().order_by('-date')
+
+
 def validate_component(code, quantity):
     """
     This function validates a single component and returns its code and quantity.
