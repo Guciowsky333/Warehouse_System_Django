@@ -4,24 +4,50 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.exceptions import NotFound
-from inventory.serializers import ComponentSerializer
+from inventory.serializers import ComponentSerializer, ChangeLocationSerializer
 from users.permissions import IsManager
 from rest_framework.pagination import PageNumberPagination
 from users import permissions
+from drf_spectacular.utils import extend_schema, OpenApiResponse
+from rest_framework import serializers
 
 
 # Create your views here.
 
 class ChangeLocationView(APIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = ChangeLocationSerializer
+
+    @extend_schema(
+        summary='Change Location component',
+        description="""
+        Changes the warehouse location of a component by its unique code.
+    
+        Business rules:
+        - Component must exist in warehouse
+        - Component cannot already be released to production
+        - Target location must exist
+        - Target location max weight cannot exceed 800 kg
+        - Authentication required
+        """,
+        request=ChangeLocationSerializer,
+        responses={
+            200: OpenApiResponse(description='Changed location successfully'),
+            400: OpenApiResponse(description='Validation error / location overweight / component already released'),
+            404: OpenApiResponse(description='Component or Location not found'),
+            401: OpenApiResponse(description='Permission denied'),
+        }
+    )
 
     def patch(self, request):
-        unique_code = request.data.get('unique_code')
-        location = request.data.get('location')
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        unique_code = serializer.validated_data['unique_code']
+        location_name = serializer.validated_data['location_name']
         user = request.user
 
         try:
-            result = change_location(unique_code, location, user)
+            result = change_location(unique_code, location_name, user)
             return Response(result, status=200)
 
         # if user provided inappropriate data

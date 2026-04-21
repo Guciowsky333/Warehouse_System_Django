@@ -9,7 +9,7 @@ from history.models import ComponentHistory
 
 
 
-def change_location(unique_code, location, user):
+def change_location(unique_code, location_name, user):
     """This function takes component by provided
     unique code and change location to provided one"""
 
@@ -19,16 +19,16 @@ def change_location(unique_code, location, user):
     with transaction.atomic():
 
 
-        if not unique_code or not location:
+        if not unique_code or not location_name:
             raise ValueError('Unique Code and Location are required.')
 
         # Validate unique code in utilis.py
         component = validate_unique_code(unique_code)
 
-        location = Location.objects.filter(name=location).first()
+        location = Location.objects.filter(name=location_name).first()
 
         if not location:
-            raise NotFound(f'Location {location} not found')
+            raise NotFound(f'Location {location_name} not found')
 
         # checking if location don't exceed max weight of location 800 kg
         if location.total_weight + component.weight > 800 :
