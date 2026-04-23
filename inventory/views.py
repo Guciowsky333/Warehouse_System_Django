@@ -8,7 +8,7 @@ from inventory.serializers import *
 from users.permissions import IsManager
 from rest_framework.pagination import PageNumberPagination
 from users import permissions
-from drf_spectacular.utils import extend_schema, OpenApiResponse
+from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParameter
 from rest_framework import serializers
 
 
@@ -28,12 +28,13 @@ class ChangeLocationView(APIView):
         - Component cannot already be released to production
         - Target location must exist
         - Target location max weight cannot exceed 800 kg
+        - Target location can not be EXTC because it is a special location to accepting components on storge
         - Authentication required
         """,
         request=ChangeLocationSerializer,
         responses={
             200: OpenApiResponse(description='Changed location successfully'),
-            400: OpenApiResponse(description='Validation error / location overweight / component already released'),
+            400: OpenApiResponse(description='Validation error / location overweight / component already released / EXTC location'),
             404: OpenApiResponse(description='Component or Location not found'),
             401: OpenApiResponse(description='Permission denied'),
         }
@@ -114,6 +115,29 @@ class ReleasedComponentView(APIView):
 
 class CheckLocationView(APIView):
     permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary='Check location',
+        description="""
+        Returns all components in specified location grouped by code
+        order by total quantity
+        
+        Business rules:
+        - Field location is required
+        - Location must exist in the warehouse
+        - Authentication required
+        """,
+        parameters=[
+            OpenApiParameter(name='location_name',type=str, required=True)
+        ],
+        responses={
+            200 : OpenApiResponse(description='List of all components on specified location'),
+            400 : OpenApiResponse(description='Location is required'),
+            404: OpenApiResponse(description='Location not found'),
+            401: OpenApiResponse(description='Permission denied'),
+        }
+
+    )
 
     def get(self, request):
         location = request.query_params.get('location_name')

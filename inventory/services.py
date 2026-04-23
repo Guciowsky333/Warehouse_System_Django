@@ -22,6 +22,12 @@ def change_location(unique_code, location_name, user):
         if not unique_code or not location_name:
             raise ValueError('Unique Code and Location are required.')
 
+
+        # Location EXTC is a special location to accepting components on storge only by manager users
+        if location_name == 'EXTC':
+            raise ValueError('You can locate component on this location this location is used to '
+                             'accepting components on storage from outside')
+
         # Validate unique code in utilis.py
         component = validate_unique_code(unique_code)
 
@@ -31,7 +37,7 @@ def change_location(unique_code, location_name, user):
             raise NotFound(f'Location {location_name} not found')
 
         # checking if location don't exceed max weight of location 800 kg
-        if location.total_weight + component.weight > 800 :
+        if location.total_weight + component.weight > 800:
             raise ValueError(f'The location {location.name} already weighs'
                              f' {location.total_weight} kg, you can"t add another {component.weight} kg.Max weight of one location is 800 kg ')
 

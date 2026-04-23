@@ -14,17 +14,19 @@ from history.models import ComponentHistory
     'payload, expected_status', [
 
         # User provided empty unique_code
-        ({'unique_code':'', 'location':'A10102'}, status.HTTP_400_BAD_REQUEST),
+        ({'unique_code':'', 'location_name':'A10102'}, status.HTTP_400_BAD_REQUEST),
         # User provided empty location
-        ({'unique_code':'unique_code_1', 'location':''}, status.HTTP_400_BAD_REQUEST),
+        ({'unique_code':'unique_code_1', 'location_name':''}, status.HTTP_400_BAD_REQUEST),
         # User provided unique code that dont exist
-        ({'unique_code':'wrong_unique_code', 'location':'A10102'}, status.HTTP_404_NOT_FOUND),
+        ({'unique_code':'wrong_unique_code', 'location_name':'A10102'}, status.HTTP_404_NOT_FOUND),
         # User provided location that dont exist
-        ({'unique_code':'unique_code_1', 'location':'wrong_location'}, status.HTTP_404_NOT_FOUND),
+        ({'unique_code':'unique_code_1', 'location_name':'wrong_location'}, status.HTTP_404_NOT_FOUND),
         # Status "4" means - User provided unique code that has been already released to production
-        ({'unique_code':'unique_code_3', 'location':'A10102'}, status.HTTP_400_BAD_REQUEST),
+        ({'unique_code':'unique_code_3', 'location_name':'A10102'}, status.HTTP_400_BAD_REQUEST),
+        # EXTC location it is a special location only to accepting components on storge by manager users
+        ({'unique_code':'unique_code_1', 'location_name':'EXTC'}, status.HTTP_400_BAD_REQUEST),
         # Appropriate data
-        ({'unique_code':'unique_code_1', 'location':'A10102'}, status.HTTP_200_OK),
+        ({'unique_code':'unique_code_1', 'location_name':'A10102'}, status.HTTP_200_OK),
     ]
 )
 
