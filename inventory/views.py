@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.exceptions import NotFound
-from inventory.serializers import ComponentSerializer, ChangeLocationSerializer
+from inventory.serializers import *
 from users.permissions import IsManager
 from rest_framework.pagination import PageNumberPagination
 from users import permissions
@@ -16,7 +16,6 @@ from rest_framework import serializers
 
 class ChangeLocationView(APIView):
     permission_classes = [IsAuthenticated]
-    serializer_class = ChangeLocationSerializer
 
     @extend_schema(
         summary='Change Location component',
@@ -24,6 +23,7 @@ class ChangeLocationView(APIView):
         Changes the warehouse location of a component by its unique code.
     
         Business rules:
+        - Fields unique_code and location_name are required
         - Component must exist in warehouse
         - Component cannot already be released to production
         - Target location must exist
@@ -40,7 +40,7 @@ class ChangeLocationView(APIView):
     )
 
     def patch(self, request):
-        serializer = self.serializer_class(data=request.data)
+        serializer = ChangeLocationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         unique_code = serializer.validated_data['unique_code']
         location_name = serializer.validated_data['location_name']
@@ -66,9 +66,33 @@ class ChangeLocationView(APIView):
 class ReleasedComponentView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        summary='Release component',
+        description="""
+        Release component by its unique code from the warehouse to 
+        specified department on production.
+        
+        Business rules:
+        - Fields unique_code and department are required
+        - Component must exist in warehouse
+        - Component cannot already be released to production
+        - Target department must be in allow departments (5000, 5500, 5800, 6000)
+        - Authentication required
+        """,
+        request=ReleasedComponentSerializer,
+        responses={
+            201 : OpenApiResponse(description='Release component successfully'),
+            400 : OpenApiResponse(description='Validation error / wrong department / component already released'),
+            404: OpenApiResponse(description='Component not found'),
+            401: OpenApiResponse(description='Permission denied'),
+        }
+    )
+
     def post(self, request):
-        unique_code = request.data.get('unique_code')
-        department = request.data.get('department')
+        serializer = ReleasedComponentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        unique_code = serializer.validated_data['unique_code']
+        department = serializer.validated_data['department']
         user = request.user
 
         try:
