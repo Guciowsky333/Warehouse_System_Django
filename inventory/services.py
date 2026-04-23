@@ -194,6 +194,13 @@ def component_quantity_at_department(code, department):
     if not code or not department:
         raise ValueError('Code and Department are required.')
 
+    # checking departments before queryset
+    allows_departments = ['5000','5500','5800','6000']
+    if department not in allows_departments:
+        raise ValueError(f'Department {department} is not exists')
+
+
+
     result = ReleasedComponent.objects.filter(department=department, code=code).values('code').annotate(
         total_boxes=Count('id'),
         total_quantity=Sum('quantity')

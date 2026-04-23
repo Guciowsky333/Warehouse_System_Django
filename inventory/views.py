@@ -77,7 +77,7 @@ class ReleasedComponentView(APIView):
         - Fields unique_code and department are required
         - Component must exist in warehouse
         - Component cannot already be released to production
-        - Target department must be in allow departments (5000, 5500, 5800, 6000)
+        - Specified department must be in allow departments (5000, 5500, 5800, 6000)
         - Authentication required
         """,
         request=ReleasedComponentSerializer,
@@ -271,6 +271,29 @@ class CheckComponentGroupedView(APIView):
 
 class ShowQuantityInDepartmentView(APIView):
     permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary='Show quantity of component in department',
+        description="""
+        Show total quantity and total boxes of component with specified code on specified department
+        
+        business rules:
+        - Field code and department are required
+        - Specified department must be in allow departments (5000, 5500, 5800, 6000)
+        - Specified code must exist in ReleasedComponent objects
+        - Authentication required
+        """,
+        parameters=[
+            OpenApiParameter(name='code',type=str, required=True),
+            OpenApiParameter(name='department',type=str, required=True)
+        ],
+        responses={
+            200: OpenApiResponse(description='Total quantity of component in department'),
+            400 : OpenApiResponse(description='Code and department are required / wrong department'),
+            404: OpenApiResponse(description='Code not found'),
+            401: OpenApiResponse(description='Permission denied'),
+        }
+    )
 
     def get(self, request):
         code = request.query_params.get('code')
