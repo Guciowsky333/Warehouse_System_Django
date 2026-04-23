@@ -174,7 +174,7 @@ class CheckComponentView(APIView):
     @extend_schema(
         summary='Check stock of component',
         description="""
-        Returns all single object of component with specified code sorted by FIFO
+        Returns all single object of component and its location with specified code sorted by FIFO
         (First in First out)
         
         Business rules:
@@ -224,6 +224,28 @@ class CheckComponentView(APIView):
 
 class CheckComponentGroupedView(APIView):
     permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary='Check stock of component',
+        description="""
+        Returns all locations of components with specified code grouped by location sorted by
+        total_quantity descending on this location 
+        
+        Business rules:
+        - Field code is required
+        - Specified code must exist in warehouse
+        - Authentication required
+        """,
+        parameters=[
+            OpenApiParameter(name='code',type=str, required=True)
+        ],
+        responses={
+            200: OpenApiResponse(description='List of all components with specified code grouped by location sorted by total quantity'),
+            400 : OpenApiResponse(description='Code is required'),
+            404: OpenApiResponse(description='Code not found'),
+            401: OpenApiResponse(description='Permission denied'),
+        }
+    )
 
     def get(self, request):
         code = request.query_params.get('code')
