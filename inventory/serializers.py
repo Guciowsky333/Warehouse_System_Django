@@ -1,9 +1,6 @@
 from rest_framework import serializers
 from inventory.models import *
 
-
-
-
 class ChangeLocationSerializer(serializers.Serializer):
     unique_code = serializers.CharField()
     location_name = serializers.CharField()

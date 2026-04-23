@@ -164,9 +164,34 @@ class CheckLocationView(APIView):
                 "message": str(e)
             },status=404)
 
+
+
+
 class CheckComponentView(APIView):
     permission_classes = [IsAuthenticated]
     serializer_class = ComponentSerializer
+
+    @extend_schema(
+        summary='Check stock of component',
+        description="""
+        Returns all single object of component with specified code sorted by FIFO
+        (First in First out)
+        
+        Business rules:
+        - Field code is required
+        - Specified code must exist in warehouse
+        - Authentication required
+        """,
+        parameters=[
+            OpenApiParameter(name='code',type=str, required=True)
+        ],
+        responses={
+            200 : OpenApiResponse(description='List of all components with specified code sorted by FIFO'),
+            400 : OpenApiResponse(description='Code is required'),
+            404: OpenApiResponse(description='Code not found'),
+            401: OpenApiResponse(description='Permission denied'),
+        }
+    )
 
     def get(self, request):
         code = request.query_params.get('code')
@@ -177,7 +202,10 @@ class CheckComponentView(APIView):
 
             paginator = PageNumberPagination()
             paginator.page_size = 10
+
+            # List all components sorted by FIFO
             page = paginator.paginate_queryset(queryset, request)
+
             serializer = self.serializer_class(page, many=True)
 
             return paginator.get_paginated_response(serializer.data)
