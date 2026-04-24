@@ -13,6 +13,8 @@ class ReleasedComponentSerializer(serializers.Serializer):
 
 
 
+
+
 class ComponentSerializer(serializers.ModelSerializer):
     location_name = serializers.CharField(source='location.name')
     class Meta:

@@ -275,7 +275,7 @@ class ShowQuantityInDepartmentView(APIView):
     @extend_schema(
         summary='Show quantity of component in department',
         description="""
-        Show total quantity and total boxes of component with specified code on specified department
+        Returns total quantity and total boxes of component with specified code on specified department
         
         business rules:
         - Field code and department are required
@@ -320,6 +320,27 @@ class ShowQuantityInDepartmentView(APIView):
 
 class ShowQuantityInStockView(APIView):
     permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary='Show quantity of component in stock',
+        description="""
+        Returns total quantity and total boxes of component with specified code in stock
+        
+        business rules:
+        - Field code is required
+        - Specified code must exist in warehouse
+        - Authentication required
+        """,
+        parameters=[
+            OpenApiParameter(name='code',type=str, required=True),
+        ],
+        responses = {
+            200: OpenApiResponse(description='Total quantity of component in stock'),
+            400 : OpenApiResponse(description='Code is required'),
+            404: OpenApiResponse(description='Code not found'),
+            401: OpenApiResponse(description='Permission denied'),
+        }
+    )
 
     def get(self, request):
         code = request.query_params.get('code')
