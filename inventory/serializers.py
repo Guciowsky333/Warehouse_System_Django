@@ -2,14 +2,16 @@ from rest_framework import serializers
 from inventory.models import *
 
 class ChangeLocationSerializer(serializers.Serializer):
-    unique_code = serializers.CharField()
-    location_name = serializers.CharField()
+    unique_code = serializers.CharField(max_length=15)
+    location_name = serializers.CharField(max_length=6)
 
 class ReleasedComponentSerializer(serializers.Serializer):
-    unique_code = serializers.CharField()
-    department = serializers.CharField()
+    unique_code = serializers.CharField(max_length=15)
+    department = serializers.CharField(max_length=4)
 
-
+class UndoComponentSerializer(serializers.Serializer):
+    unique_code = serializers.CharField(max_length=15)
+    location_name = serializers.CharField(max_length=6)
 
 
 

@@ -367,13 +367,42 @@ class ShowQuantityInStockView(APIView):
 class UndoComponentView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        summary='Undo component',
+        description="""
+        Returns a component with a specified unique code from the department back to the warehouse
+        at the provided location
+        
+        business rules:
+        - Fields unique_code and location_name are required
+        - Specified location must exist in warehouse
+        - Total weight of specified location after adding the component can"t exceed 800 kg
+        - Specified unique code must exist in department
+        - Authentication required
+        """,
+        request=UndoComponentSerializer,
+        responses={
+            201 : OpenApiResponse(description='Successfully undo component'),
+            400 : OpenApiResponse(description='Validation error / location overweight / '),
+            404: OpenApiResponse(description='Code or location not found'),
+            401: OpenApiResponse(description='Permission denied'),
+
+        }
+
+    )
+
     def post(self, request):
-        unique_code = request.data.get('unique_code')
-        location = request.data.get('location')
+
+        serializer = UndoComponentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+
+        unique_code = serializer.data['unique_code']
+        location_name = request.data.get('location_name')
         user = request.user
 
         try:
-            result = undo_component(unique_code, location, user)
+            result = undo_component(unique_code, location_name, user)
             return Response(result, status=201)
 
         except ValueError as e:

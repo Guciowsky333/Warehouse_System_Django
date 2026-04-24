@@ -18,9 +18,9 @@ from history.models import ComponentHistory
         # User provided empty location
         ({'unique_code':'unique_code_1', 'location_name':''}, status.HTTP_400_BAD_REQUEST),
         # User provided unique code that dont exist
-        ({'unique_code':'wrong_unique_code', 'location_name':'A10102'}, status.HTTP_404_NOT_FOUND),
+        ({'unique_code':'123331', 'location_name':'A10102'}, status.HTTP_404_NOT_FOUND),
         # User provided location that dont exist
-        ({'unique_code':'unique_code_1', 'location_name':'wrong_location'}, status.HTTP_404_NOT_FOUND),
+        ({'unique_code':'unique_code_1', 'location_name':'A44101'}, status.HTTP_404_NOT_FOUND),
         # Status "4" means - User provided unique code that has been already released to production
         ({'unique_code':'unique_code_3', 'location_name':'A10102'}, status.HTTP_400_BAD_REQUEST),
         # EXTC location it is a special location only to accepting components on storge by manager users
@@ -112,11 +112,11 @@ def test_ChangeLocationView_max_weight(test_location2, test_component, test_user
         # Empty department
         ({'unique_code':'unique_code_1', 'department':''}, status.HTTP_400_BAD_REQUEST),
         # User provided wrong department allows [5000, 5500, 5800, 6000]
-        ({'unique_code':'unique_code_1', 'department':'wrong_department'}, status.HTTP_400_BAD_REQUEST),
+        ({'unique_code':'unique_code_1', 'department':'7000'}, status.HTTP_400_BAD_REQUEST),
         # Status "4" means - User provided unique code that has been already released to production
         ({'unique_code':'unique_code_3', 'department':'5500'}, status.HTTP_400_BAD_REQUEST),
         # User provided unique code that not belong to any components
-        ({'unique_code':'wrong_unique_code', 'department':'5500'}, status.HTTP_404_NOT_FOUND),
+        ({'unique_code':'123213', 'department':'5500'}, status.HTTP_404_NOT_FOUND),
         # Appropriate data
         ({'unique_code':'unique_code_1', 'department':'5500'}, status.HTTP_201_CREATED),
 
@@ -126,9 +126,6 @@ def test_ChangeLocationView_max_weight(test_location2, test_component, test_user
 def test_ReleasedComponentView(payload, expected_status, test_component, test_released_component, test_user):
     client = APIClient()
     client.force_authenticate(test_user)
-
-    component = test_component
-
 
     response = client.post('/api/inventory/release_component/', payload, format='json')
     assert response.status_code == expected_status
@@ -174,7 +171,7 @@ def test_ReleasedComponentView_requires_authentication():
         # Empty location
         ('', status.HTTP_400_BAD_REQUEST),
         # Not exist location
-        ('wrong_location', status.HTTP_404_NOT_FOUND),
+        ('A15601', status.HTTP_404_NOT_FOUND),
         # Appropriate data
         ('A10101', status.HTTP_200_OK),
     ]
@@ -392,14 +389,14 @@ def test_CheckComponentGroupedView_requires_authentication():
         ('', '5000', status.HTTP_400_BAD_REQUEST),
         ('15016808', '', status.HTTP_400_BAD_REQUEST),
         ('wrong_code', '5000', status.HTTP_404_NOT_FOUND),
-        ('15016610', 'wrong_department', status.HTTP_404_NOT_FOUND),
+        ('15016610', '7000', status.HTTP_400_BAD_REQUEST),
         ('15016808', '5000', status.HTTP_200_OK),
     ]
 )
 
 def test_ShowQuantityInDepartmentView(code, department, expected_status,test_user):
     """In this test we are creating 2 ReleasedComponent with the same code '15016808' and the same department
-    '5000' and we expect that endpoint returns us sum quantity and boxes of code '15016808' in our department """
+    '5000' and we expect that endpoint returns us sum quantity and boxes of code '15016808' in our department 5000"""
 
     client = APIClient()
     client.force_authenticate(test_user)
@@ -484,15 +481,15 @@ def test_ShowQuantityInStockView_requires_authentication(test_user):
 @pytest.mark.parametrize(
     'payload, expected_status', [
         # Empty unique_code
-        ({'unique_code':'','location':'A10101'}, status.HTTP_400_BAD_REQUEST),
+        ({'unique_code':'','location_name':'A10101'}, status.HTTP_400_BAD_REQUEST),
         # Empty location
-        ({'unique_code':'unique_code_3','location':''}, status.HTTP_400_BAD_REQUEST),
+        ({'unique_code':'unique_code_3','location_name':''}, status.HTTP_400_BAD_REQUEST),
         # not exist unique_code
-        ({'unique_code':'wrong_unique_code','location':'A10101'}, status.HTTP_404_NOT_FOUND),
+        ({'unique_code':'1233444','location_name':'A10101'}, status.HTTP_404_NOT_FOUND),
         # not exist location
-        ({'unique_code':'unique_code_3','location':'wrong_location'}, status.HTTP_404_NOT_FOUND),
+        ({'unique_code':'unique_code_3','location_name':'A15601'}, status.HTTP_404_NOT_FOUND),
         # Appropriate data
-        ({'unique_code':'unique_code_3','location':'A10101'}, status.HTTP_201_CREATED),
+        ({'unique_code':'unique_code_3','location_name':'A10101'}, status.HTTP_201_CREATED),
     ]
 )
 
@@ -505,8 +502,9 @@ def test_UndoComponentView(payload, expected_status, test_user, test_released_co
 
 
     response = client.post('/api/inventory/undo_component/', payload, format='json')
-
+    print(response.data)
     assert response.status_code == expected_status
+    print(response.data)
 
     if expected_status == status.HTTP_201_CREATED:
         assert not ReleasedComponent.objects.filter(unique_code=test_released_component.unique_code).exists()
@@ -558,7 +556,7 @@ def test_UndoComponentView_max_weight(test_user, test_location, test_released_co
 
     body = {
         'unique_code': test_released_component.unique_code,
-        'location': test_location.name,
+        'location_name': test_location.name,
     }
 
     response = client.post('/api/inventory/undo_component/', body, format='json')

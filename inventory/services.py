@@ -236,7 +236,7 @@ def component_quantity_at_stock(code):
     return total_boxes, total_quantity
 
 
-def undo_component(unique_code, location, user):
+def undo_component(unique_code, location_name, user):
     """
     Returns the given component from department back to the warehouse at the specified location.
 
@@ -246,10 +246,10 @@ def undo_component(unique_code, location, user):
     after adding this component)
     """
     with transaction.atomic():
-        if not unique_code or not location:
+        if not unique_code or not location_name:
             raise ValueError('Unique Code and Location are required.')
 
-        location = Location.objects.filter(name=location).first()
+        location = Location.objects.filter(name=location_name).first()
         if not location:
             raise NotFound('Location not found')
 
