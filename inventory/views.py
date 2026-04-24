@@ -36,7 +36,7 @@ class ChangeLocationView(APIView):
             200: OpenApiResponse(description='Changed location successfully'),
             400: OpenApiResponse(description='Validation error / location overweight / component already released / EXTC location'),
             404: OpenApiResponse(description='Component or Location not found'),
-            401: OpenApiResponse(description='Permission denied'),
+            401: OpenApiResponse(description='Unauthorized'),
         }
     )
 
@@ -85,7 +85,7 @@ class ReleasedComponentView(APIView):
             201 : OpenApiResponse(description='Release component successfully'),
             400 : OpenApiResponse(description='Validation error / wrong department / component already released'),
             404: OpenApiResponse(description='Component not found'),
-            401: OpenApiResponse(description='Permission denied'),
+            401: OpenApiResponse(description='Unauthorized'),
         }
     )
 
@@ -134,7 +134,7 @@ class CheckLocationView(APIView):
             200 : OpenApiResponse(description='List of all components on specified location'),
             400 : OpenApiResponse(description='Location is required'),
             404: OpenApiResponse(description='Location not found'),
-            401: OpenApiResponse(description='Permission denied'),
+            401: OpenApiResponse(description='Unauthorized'),
         }
 
     )
@@ -189,7 +189,7 @@ class CheckComponentView(APIView):
             200 : OpenApiResponse(description='List of all components with specified code sorted by FIFO'),
             400 : OpenApiResponse(description='Code is required'),
             404: OpenApiResponse(description='Code not found'),
-            401: OpenApiResponse(description='Permission denied'),
+            401: OpenApiResponse(description='Unauthorized'),
         }
     )
 
@@ -243,7 +243,7 @@ class CheckComponentGroupedView(APIView):
             200: OpenApiResponse(description='List of all components with specified code grouped by location sorted by total quantity'),
             400 : OpenApiResponse(description='Code is required'),
             404: OpenApiResponse(description='Code not found'),
-            401: OpenApiResponse(description='Permission denied'),
+            401: OpenApiResponse(description='Unauthorized'),
         }
     )
 
@@ -291,7 +291,7 @@ class ShowQuantityInDepartmentView(APIView):
             200: OpenApiResponse(description='Total quantity of component in department'),
             400 : OpenApiResponse(description='Code and department are required / wrong department'),
             404: OpenApiResponse(description='Code not found'),
-            401: OpenApiResponse(description='Permission denied'),
+            401: OpenApiResponse(description='Unauthorized'),
         }
     )
 
@@ -338,7 +338,7 @@ class ShowQuantityInStockView(APIView):
             200: OpenApiResponse(description='Total quantity of component in stock'),
             400 : OpenApiResponse(description='Code is required'),
             404: OpenApiResponse(description='Code not found'),
-            401: OpenApiResponse(description='Permission denied'),
+            401: OpenApiResponse(description='Unauthorized'),
         }
     )
 
@@ -386,7 +386,7 @@ class UndoComponentView(APIView):
             201 : OpenApiResponse(description='Successfully undo component'),
             400 : OpenApiResponse(description='Validation error / location overweight / EXTC location '),
             404: OpenApiResponse(description='Code or location not found'),
-            401: OpenApiResponse(description='Permission denied'),
+            401: OpenApiResponse(description='Unauthorized'),
 
         }
 
@@ -421,10 +421,33 @@ class ReceivingComponentView(APIView):
 
     # only users with the manager role can receive components in the warehous
     permission_classes = [IsAuthenticated, IsManager]
+
+    @extend_schema(
+        summary='Receiving component',
+        description="""
+        Create a component model with specified data with EXTC location, only managers are able 
+        to accepting components from outside to the warehouse.
+        
+        business rules:
+        - Fields code, quantity and weight are required
+        - Authentication required
+        - User must has a manager role 
+        """,
+        request=ReceivingComponentSerializer,
+        responses={
+            201: OpenApiResponse(description='Successfully created component'),
+            400: OpenApiResponse(description='Validation error'),
+            401: OpenApiResponse(description='Unauthorized'),
+            403: OpenApiResponse(description='Permission denied'),
+        }
+    )
     def post(self, request):
-        code = request.data.get('code')
-        quantity = request.data.get('quantity')
-        weight = request.data.get('weight')
+        serializer = ReceivingComponentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        code = serializer.data['code']
+        quantity = serializer.data['quantity']
+        weight = serializer.data['weight']
 
         try:
             result = receiving_the_component_into_the_warehouse(code, weight, quantity)

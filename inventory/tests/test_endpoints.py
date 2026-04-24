@@ -585,7 +585,7 @@ def test_UndoComponentView_requires_authentication(test_user):
         # Empty quantity
         ({'code':'15016610','weight':20,'quantity':''},status.HTTP_400_BAD_REQUEST),
         # Appropriate data
-        ({'code':'15016610','weight':20,'quantity':1000},status.HTTP_201_CREATED),
+        ({'code':'15016610','weight':20,'quantity':'1000'},status.HTTP_201_CREATED),
 
     ]
 )

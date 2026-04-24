@@ -311,8 +311,6 @@ def receiving_the_component_into_the_warehouse(code,weight, quantity):
     if not code or not weight or not quantity:
         raise ValueError('Code and Weight and Quantity are required.')
 
-    if not str(quantity).isdigit():
-        raise ValueError('Quantity must be a number')
 
     location_EXTC = Location.objects.filter(name='EXTC').first()
 

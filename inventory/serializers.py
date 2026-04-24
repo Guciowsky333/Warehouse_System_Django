@@ -13,7 +13,10 @@ class UndoComponentSerializer(serializers.Serializer):
     unique_code = serializers.CharField(max_length=15)
     location_name = serializers.CharField(max_length=6)
 
-
+class ReceivingComponentSerializer(serializers.Serializer):
+    code = serializers.CharField()
+    quantity = serializers.IntegerField()
+    weight = serializers.FloatField()
 
 
 
