@@ -249,6 +249,12 @@ def undo_component(unique_code, location_name, user):
         if not unique_code or not location_name:
             raise ValueError('Unique Code and Location are required.')
 
+
+        if location_name == 'EXTC':
+            raise ValueError('You can not locate component on location EXTC.'
+                             'It is special location for accepting components into the warehouse.')
+
+
         location = Location.objects.filter(name=location_name).first()
         if not location:
             raise NotFound('Location not found')

@@ -376,6 +376,7 @@ class UndoComponentView(APIView):
         business rules:
         - Fields unique_code and location_name are required
         - Specified location must exist in warehouse
+        - Specified location can not be EXTC.It is special location for accepting components into the warehouse
         - Total weight of specified location after adding the component can"t exceed 800 kg
         - Specified unique code must exist in department
         - Authentication required
@@ -383,7 +384,7 @@ class UndoComponentView(APIView):
         request=UndoComponentSerializer,
         responses={
             201 : OpenApiResponse(description='Successfully undo component'),
-            400 : OpenApiResponse(description='Validation error / location overweight / '),
+            400 : OpenApiResponse(description='Validation error / location overweight / EXTC location '),
             404: OpenApiResponse(description='Code or location not found'),
             401: OpenApiResponse(description='Permission denied'),
 
