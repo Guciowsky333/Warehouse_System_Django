@@ -183,7 +183,8 @@ class CheckComponentView(APIView):
         - Authentication required
         """,
         parameters=[
-            OpenApiParameter(name='code',type=str, required=True)
+            OpenApiParameter(name='code',type=str, required=True),
+            OpenApiParameter(name='page', type=int, required=False, description='Page number'),
         ],
         responses={
             200 : OpenApiResponse(description='List of all components with specified code sorted by FIFO'),

@@ -39,6 +39,7 @@ class ComponentHistoryQuerySerializer(serializers.Serializer):
 
 
 class ComponentHistorySerializer(serializers.ModelSerializer):
+    date = serializers.DateTimeField(format='%Y-%m-%d %H:%M')
     class Meta:
         model = ComponentHistory
         fields = ['code', 'unique_code','previous_location','current_location', 'quantity', 'weight', 'full_name', 'date', 'action']
