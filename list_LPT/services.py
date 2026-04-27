@@ -27,15 +27,6 @@ def validate_component(code, quantity):
     omit endpoint that check only single component
     """
 
-    if not code or not quantity:
-        raise ValueError('Fields code and quantity are required')
-
-
-
-    if not str(quantity).isdigit():
-        raise ValueError('Quantity must be a number')
-
-    quantity = int(quantity)
     components = Component.objects.filter(list__isnull=True)
 
     if not components.filter(code=code).exists():
@@ -65,8 +56,6 @@ def create_list(order_components:list[Item], department:str, user:CustomUser) ->
     # we use transaction.atomic() to dont create a listLPT when one of the provided components won't pass validations
     with transaction.atomic():
 
-        if not order_components or not department:
-            raise ValueError('Fields order_components and department are required')
 
         list_lpt = ListLPT.objects.create(
             department=department,
@@ -80,7 +69,7 @@ def create_list(order_components:list[Item], department:str, user:CustomUser) ->
             valid_code, valid_quantity = validate_component(code, quantity)
 
             if list_lpt.order_components.filter(code=code).exists():
-                raise ValueError(f'Code {code} is already on this list you can"t ordered it twice')
+                raise ValueError(f'You already added Code {code} to this list you can"t ordered it twice')
 
 
             # taking all components with provided code sorted by date (FIFO)

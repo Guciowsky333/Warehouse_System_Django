@@ -8,6 +8,7 @@ from list_LPT.services import *
 from list_LPT.permissions import IsForemanOrHigher
 from list_LPT.serializers import *
 from rest_framework.pagination import PageNumberPagination
+from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParameter
 
 
 # Create your views here.
@@ -34,17 +35,44 @@ class ShowAllListLPTAPIView(APIView):
 
 
 
-
-
-
-
 class ValidateComponentView(APIView):
     permission_classes = [IsAuthenticated, IsForemanOrHigher]
 
+    @extend_schema(
+        summary='Validate single component',
+        description="""
+        Validates a single component before adding it to the order list.
+
+        This endpoint is designed for real-time validation during list creation.
+        Frontend should call this endpoint after each component is entered by the user,
+        so they receive immediate feedback without waiting for the entire list to be submitted.
+
+        Business rules:
+        - Fields code and quantity are required
+        - Component with provided code must exist in warehouse
+        - Quantity cannot exceed available stock
+        - Component cannot be already assigned to another list
+        - User must has at least foreman role or higher
+        - Authentication required
+        """,
+        request=OrderComponentInputSerializer,
+        responses={
+            200: OpenApiResponse(description='Validation was successful'),
+            400 : OpenApiResponse(description='User want order too much quantity of component'),
+            404: OpenApiResponse(description='Code not found'),
+            401: OpenApiResponse(description='Unauthorized'),
+            403: OpenApiResponse(description='Permission denied'),
+
+        }
+    )
+
 
     def post(self, request):
-        code = request.data.get('code')
-        quantity = request.data.get('quantity')
+        serializer = OrderComponentInputSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        code = serializer.data['code']
+        quantity = serializer.data['quantity']
 
         try:
             validate_component(code, quantity)
@@ -69,14 +97,43 @@ class CreateListView(APIView):
     # only users with foreman role or higher are albe to create a list
     permission_classes = [IsAuthenticated, IsForemanOrHigher]
 
-    serializer_class = ListLPTCreateSerializer
+    @extend_schema(
+        summary='Create list with provided components',
+        description="""
+        This endpoint creates a new list with provided components and department.
+        
+        Each component goes through the same validation as in ValidateComponentView, so even 
+        if user skip ValidateComponentView endpoint components will still goes through validations
+        
+        Business rules:
+        - Fields components and department are required
+        - Department must be one of : 5000, 5500, 5800, 6000
+        - Each component must exist in the warehouse with lower or equal quantity that user want to order 
+        - User cannot order the same code of component more than once per list 
+        - User must have at least foreman role or higher to create a list
+        - Authentication required
+        """,
+        request=CreateListLPTInputSerializer,
+        responses={
+            201: OpenApiResponse(description='Create list was successful'),
+            400 : OpenApiResponse(description='Validation error / code has been already on this list / dont enough quantity at stock'),
+            404: OpenApiResponse(description='Code not found'),
+            401: OpenApiResponse(description='Unauthorized'),
+            403: OpenApiResponse(description='Permission denied'),
+
+        }
+    )
+
+
 
     def post(self, request):
-        components = request.data.get('components')
-        department = request.data.get('department')
-        user = request.user
-        serializer = self.serializer_class(data=request.data)
+        serializer = CreateListLPTInputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+
+        components = serializer.data['components']
+        department = serializer.data['department']
+        user = request.user
+
 
         try:
             result = create_list(components, department, user)

@@ -5,6 +5,23 @@ from inventory.serializers import ComponentSerializer
 from django.db.models import Sum
 
 
+class OrderComponentInputSerializer(serializers.Serializer):
+    code = serializers.CharField()
+    quantity = serializers.IntegerField()
+
+class CreateListLPTInputSerializer(serializers.Serializer):
+    department = serializers.ChoiceField(
+        choices= [
+            '5000',
+            '5500',
+            '5800',
+            '6000',
+        ]
+    )
+    components = serializers.ListField(
+        child=OrderComponentInputSerializer()
+    )
+
 class ListLPTSerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField()
 
@@ -25,6 +42,7 @@ class ListLPTCreateSerializer(serializers.Serializer):
 
 
     def to_internal_value(self, data):
+        # If user specified department as int we convert it to string
         if isinstance(data.get('department'), int):
             data['department'] = str(data['department'])
         return super().to_internal_value(data)

@@ -14,6 +14,7 @@ from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParamet
 
 class ComponentsHistoryView(APIView):
     permission_classes = [IsAuthenticated]
+
     @extend_schema(
         summary='Show history of components',
         description="""
@@ -47,8 +48,11 @@ class ComponentsHistoryView(APIView):
 
 
     def get(self, request):
+
+        # Validate specified filters
         query_serializer = ComponentHistoryQuerySerializer(data=request.query_params)
         query_serializer.is_valid(raise_exception=True)
+
         data = query_serializer.data
 
         code = data.get('code')
