@@ -6,13 +6,14 @@ from rest_framework.test import APIClient
 
 
 from history.models import *
-from inventory.tests.conftest import test_component
+
 
 
 # Test for api/history/by_code/
 @pytest.mark.parametrize(
     'query_params', [
-        (f'?code={test_component.code}'),
+        # We use the same data as the test component in the conftest.py file
+        ('?code=code'),
         ('?unique_code=unique_code'),
         ('?user_name=test user')
     ],
@@ -153,7 +154,7 @@ def test_history_with_action(action, test_user, test_location, test_location2, t
         # Empty code,
         ('','change_location',status.HTTP_400_BAD_REQUEST),
         # Code that doesnt exist
-        ('wrong_code', 'change_location',status.HTTP_404_NOT_FOUND),
+        ('123', 'change_location',status.HTTP_404_NOT_FOUND),
         # Wrong action
         ('code', 'wrong_action',status.HTTP_400_BAD_REQUEST),
 
@@ -163,7 +164,7 @@ def test_history_with_invalid_data(code, action,expected_status, test_user, test
     """In this test we check whole possible invalid data such as wrong action or wrong code amd more"""
 
 
-    change_location = ComponentHistory.objects.create(
+    ComponentHistory.objects.create(
         action='change_location',
         code=test_component.code,
         unique_code=test_component.unique_code,
@@ -179,3 +180,21 @@ def test_history_with_invalid_data(code, action,expected_status, test_user, test
     client.force_authenticate(user=test_user)
     response = client.get(f'/api/history/?code={code}&action={action}')
     assert response.status_code == expected_status
+
+def test_history_with_two_filters(test_user, test_history_component_release, test_component):
+    """
+    In this test we check what happens when user provided two filters and the same time.
+    We expect that our endpoint returns 400 status code because user can only user 1 filter at the same time.
+    """
+
+    client = APIClient()
+    client.force_authenticate(user=test_user)
+
+
+
+    # We use two filters code and unique_code
+    response = client.get(f'/api/history/?code={test_component.code}&unique_code={test_component.unique_code}')
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.data['non_field_errors'][0] == 'Provide exactly one of: code, unique_code, user_name.'
+

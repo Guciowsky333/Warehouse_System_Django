@@ -1,4 +1,6 @@
 import pytest
+
+from history.models import ComponentHistory
 from inventory.models import *
 from users.models import *
 @pytest.fixture
@@ -33,4 +35,18 @@ def test_user(db):
         first_name="test",
         last_name="user",
         role="test_role1",
+    )
+
+@pytest.fixture
+def test_history_component_release(db, test_component, test_user, test_location):
+    return ComponentHistory.objects.create(
+        action='component_release',
+        code = test_component.code,
+        unique_code = test_component.unique_code,
+        weight = test_component.weight,
+        quantity = test_component.quantity,
+        user = test_user,
+        full_name = test_user.full_name(),
+        previous_location = test_location.name,
+        current_location = '5000'
     )

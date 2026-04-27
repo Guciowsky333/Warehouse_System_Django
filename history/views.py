@@ -38,6 +38,7 @@ class ComponentsHistoryView(APIView):
             response = paginator.get_paginated_response(response_serializer.data)
             response.data['message'] = message
 
+
             return response
 
 
