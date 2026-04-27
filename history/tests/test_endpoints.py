@@ -6,12 +6,13 @@ from rest_framework.test import APIClient
 
 
 from history.models import *
+from inventory.tests.conftest import test_component
 
 
 # Test for api/history/by_code/
 @pytest.mark.parametrize(
     'query_params', [
-        ('?code=code'),
+        (f'?code={test_component.code}'),
         ('?unique_code=unique_code'),
         ('?user_name=test user')
     ],
@@ -154,7 +155,7 @@ def test_history_with_action(action, test_user, test_location, test_location2, t
         # Code that doesnt exist
         ('wrong_code', 'change_location',status.HTTP_404_NOT_FOUND),
         # Wrong action
-        ('code', 'wrong_action',status.HTTP_404_NOT_FOUND),
+        ('code', 'wrong_action',status.HTTP_400_BAD_REQUEST),
 
     ]
 )

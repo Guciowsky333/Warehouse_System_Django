@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.exceptions import NotFound
 from history.models import ComponentHistory
-from history.serializers import ComponentHistorySerializer
+from history.serializers import *
 from history.services import *
 from rest_framework.pagination import PageNumberPagination
 # Create your views here.
@@ -13,13 +13,17 @@ from rest_framework.pagination import PageNumberPagination
 
 class ComponentsHistoryView(APIView):
     permission_classes = [IsAuthenticated]
-    serializer_class = ComponentHistorySerializer
+
 
     def get(self, request):
-        code = request.query_params.get('code')
-        unique_code = request.query_params.get('unique_code')
-        user_name = request.query_params.get('user_name')
-        action = request.query_params.get('action')
+        query_serializer = ComponentHistoryQuerySerializer(data=request.query_params)
+        query_serializer.is_valid(raise_exception=True)
+        data = query_serializer.data
+
+        code = data.get('code')
+        unique_code = data.get('unique_code')
+        user_name = data.get('user_name')
+        action = data.get('action')
 
         try:
             result = history(code, unique_code, user_name, action)
@@ -29,9 +33,9 @@ class ComponentsHistoryView(APIView):
             paginator.page_size = 20
             page = paginator.paginate_queryset(queryset, request)
 
-            serializer = ComponentHistorySerializer(page, many=True)
+            response_serializer = ComponentHistorySerializer(page, many=True)
 
-            response = paginator.get_paginated_response(serializer.data)
+            response = paginator.get_paginated_response(response_serializer.data)
             response.data['message'] = message
 
             return response
