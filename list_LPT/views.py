@@ -170,9 +170,39 @@ class CreateListView(APIView):
 class ReleaseComponentFromListView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        summary='Release component from list',
+        description="""
+        This endpoint is used to release provided component from provided list.
+        
+        Into each list at the moment of creating components are assigned
+        by FIFO method (First in First out).This endpoint check whether 
+        provided unique_code is on the provided list and if yes release it from the warehouse 
+        to department that provided list has been created for and create ReleasedComponent model with the same data.
+        If all components are released then this endpoint should closed provided list.
+        
+        Business rules:
+        - Fields list_number and unique_code are required
+        - List must exist in the database 
+        - Specified list cannot be closed 
+        - Specified unique_code must exist in the warehouse and must be assigned to provided list
+        - Authentication required
+        """,
+        request=ReleaseComponentFromListSerializer,
+        responses={
+            201 : OpenApiResponse(description='Correct release of the component from the list'),
+            400: OpenApiResponse(description='Validation error / Provided list is closed / Provided unique_code is not on provided list'),
+            404 : OpenApiResponse(description='List or component not found '),
+            401: OpenApiResponse(description='Unauthorized'),
+        }
+    )
+
     def post(self, request):
-        list_number = request.data.get('list_number')
-        unique_code = request.data.get('unique_code')
+        serializer = ReleaseComponentFromListSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        list_number = serializer.data['list_number']
+        unique_code = serializer.data['unique_code']
         user = request.user
 
         try:

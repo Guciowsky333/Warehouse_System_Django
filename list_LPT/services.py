@@ -110,9 +110,6 @@ def released_component_from_list(list_number: str, unique_code: str, user:Custom
 
     with transaction.atomic():
 
-        if not list_number or not unique_code:
-            raise ValueError('Fields list_number and unique_code are required')
-
         try:
             list_lpt = ListLPT.objects.get(list_number=list_number)
         except ObjectDoesNotExist:
@@ -127,7 +124,7 @@ def released_component_from_list(list_number: str, unique_code: str, user:Custom
         try:
             component = Component.objects.select_for_update().get(unique_code=unique_code)
         except ObjectDoesNotExist:
-            raise NotFound(f'Component {unique_code} not found at stock')
+            raise NotFound(f'Component with unique_code {unique_code} not found at stock')
 
 
         # Taking all components from our list
@@ -137,9 +134,6 @@ def released_component_from_list(list_number: str, unique_code: str, user:Custom
             raise ValueError('This component is not on this list')
 
 
-
-        # and then add a quantity of this component to filed already_released in OrderComponent model
-        # adn to the end removing this component from warehouse
 
         # We create ReleasedComponent and ComponentHistory with data from our component
         ReleasedComponent.objects.create(
@@ -229,7 +223,7 @@ def get_optimize_list_order_components(list_number:str) -> ListLPT:
     list_lpt = ListLPT.objects.prefetch_related(
         Prefetch(
             'order_components',
-            OrderComponent.objects.order_by('-quantity')
+            queryset=OrderComponent.objects.order_by('-quantity')
         )
     ).get(list_number=list_number)
 
