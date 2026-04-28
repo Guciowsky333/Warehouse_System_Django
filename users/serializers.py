@@ -4,7 +4,7 @@ from users.models import CustomUser
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ('first_name', 'last_name', 'role')
+        fields = ['first_name', 'last_name', 'role']
 
     def validate_first_name(self, value):
         if not value.isalpha():
