@@ -34,22 +34,6 @@ class ListLPTSerializer(serializers.ModelSerializer):
 
 
 
-class ListLPTCreateSerializer(serializers.Serializer):
-    """
-    This serializer is used to validation department that user provided in body
-    """
-    department = serializers.ChoiceField(choices=ListLPT.DEPARTMENTS)
-
-
-    def to_internal_value(self, data):
-        # If user specified department as int we convert it to string
-        if isinstance(data.get('department'), int):
-            data['department'] = str(data['department'])
-        return super().to_internal_value(data)
-
-
-
-
 class OrderComponentSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderComponent

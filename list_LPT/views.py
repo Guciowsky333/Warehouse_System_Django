@@ -17,8 +17,25 @@ class ShowAllListLPTAPIView(APIView):
     permission_classes = [IsAuthenticated]
     serializer_class = ListLPTSerializer
 
+    @extend_schema(
+        summary="Shows all lists",
+        description="""
+        Shows all lists sorted by date starting with the newest
+        
+        Business rules:
+        - Authentication required
+        """,
+        parameters=[
+            OpenApiParameter(name='page',required=False, description='Page number'),
+        ],
+        responses={
+            200: OpenApiResponse(description='All lists sorted by date'),
+            401: OpenApiResponse(description='Unauthorized')
+        }
+    )
+
     def get(self, request):
-        queryset = ListLPT.objects.all().order_by('-date')
+        queryset = show_all_list()
 
         # We use pagination here because in the future we can have a lot of lists in the database
 
