@@ -440,12 +440,16 @@ def test_ListLPTDetailView_requires_authentication(test_list_lpt):
 
 @pytest.mark.parametrize(
     'list_number, expected_status',[
+        # List not exist
         ('wrong_number', status.HTTP_404_NOT_FOUND),
+        # List is closed
+        ('number_2', status.HTTP_400_BAD_REQUEST),
+        # Appropriate data
         ('number_1', status.HTTP_200_OK),
     ]
 )
 
-def test_PrintListView(list_number, expected_status, test_warehouseman, test_list_lpt,
+def test_PrintListView(list_number, expected_status, test_warehouseman, test_list_lpt, test_list_lpt_closed,
                        test_location_A10101, test_location_A10102, test_location_B12103):
     """
     In this test we assigned 3 components to our list each one with different location, and we

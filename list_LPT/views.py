@@ -220,18 +220,35 @@ class ReleaseComponentFromListView(APIView):
             }, status=404)
 
 class ListLPTDetailsView(APIView):
-    """This endpoint is used to show users detail about provided list such as
-    how many components are in this list and how many has been released so far, and more"""
-
 
     permission_classes = [IsAuthenticated]
-    serializer_class = ListLPTDetailsSerializer
+
+    @extend_schema(
+        summary='Shows details of provided list',
+        description="""
+        Shows whole details about provided list such as who created this list, whether this list is closed or not,
+        how many components are inside this list and how many of them has been released so far and more.
+        
+        Business rules:
+        - Fields list_number is required
+        - List must exist
+        - Authentication required
+        """,
+        responses={
+            200 : OpenApiResponse(description='Details of provided list'),
+            400 : OpenApiResponse(description='Validations error'),
+            404:OpenApiResponse(description='List not found '),
+            401:OpenApiResponse(description='Unauthorized'),
+        }
+
+    )
+
 
     def get(self, request, list_number):
 
         try:
             result = get_optimize_list_order_components(list_number)
-            serializer = self.serializer_class(result)
+            serializer = ListLPTDetailsSerializer(result)
             return Response(serializer.data, status=200)
 
         except NotFound as e:
@@ -249,20 +266,37 @@ class ListLPTDetailsView(APIView):
 
 
 class PrintListView(APIView):
-    """
-    This endpoint is used to print whole physical list on the warehouse
 
-    It will be useful for the warehouse workers to have physical list with all components
-    that they have to release sorted by location
-    """
     permission_classes = [IsAuthenticated]
-    serializer_class = PrintListLPTSerializer
+
+
+    @extend_schema(
+        summary='Print list',
+        description="""
+        This endpoint is used to print whole physical list on the warehouse
+        
+        It will be useful for the warehouse workers to have physical list with all components 
+        that they have to release sorted by location with  their unique_codes and locations
+        
+        Business rules:
+        - Fields list_number is required
+        - List must exist
+        - Specified list cannot be closed 
+        - Authentication required
+        """,
+        responses={
+        200: OpenApiResponse(description='Print list on the warehouse'),
+        400 : OpenApiResponse(description='Validations error / Provided list is closed'),
+        404:OpenApiResponse(description='List not found '),
+        401:OpenApiResponse(description='Unauthorized'),
+        }
+    )
 
     def get(self, request, list_number):
 
         try:
             result = get_optimize_list_components(list_number)
-            serializer = self.serializer_class(result)
+            serializer = PrintListLPTSerializer(result)
             return Response(serializer.data, status=200)
 
         except NotFound as e:

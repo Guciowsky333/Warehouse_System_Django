@@ -253,6 +253,9 @@ def get_optimize_list_components(list_number:str) -> ListLPT:
         )
     ).get(list_number=list_number)
 
+    if list_lpt.closed:
+        raise ValueError('This list has already been closed')
+
     return list_lpt
 
 
