@@ -7,15 +7,16 @@ from history.models import ComponentHistory
 from django.db.models import Sum, Prefetch
 
 from typing import TypedDict
+from django.db.models.query import QuerySet
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
 
 
-def show_all_list():
+def show_all_list() -> QuerySet[ListLPT]:
     return ListLPT.objects.all().order_by('-date')
 
 
-def validate_component(code, quantity):
+def validate_component(code:str, quantity:int) -> tuple[str, int]:
     """
     This function validates a single component and returns its code and quantity.
 
@@ -102,7 +103,7 @@ def create_list(order_components:list[Item], department:str, user:CustomUser) ->
     }
 
 
-def released_component_from_list(list_number: str, unique_code: str, user:CustomUser) -> dict:
+def released_component_from_list(list_number: str, unique_code: str, user:CustomUser) -> dict[str, str]:
     """
     This function check whether a list with provided number exist and if component with provided unique code exists
     in this list.If yes it removing this component from warehouse and create ReleasedComponent and ComponentHistory

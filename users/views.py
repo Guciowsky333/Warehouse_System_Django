@@ -48,7 +48,12 @@ class CreateCustomUserView(APIView):
     def post(self, request):
         serializer = CustomUserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        result = create_custom_user(serializer.validated_data)
+
+        first_name = serializer.validated_data['first_name']
+        last_name = serializer.validated_data['last_name']
+        role = serializer.validated_data['role']
+
+        result = create_custom_user(first_name, last_name, role)
 
         return Response({
             "message":"User created successfully",

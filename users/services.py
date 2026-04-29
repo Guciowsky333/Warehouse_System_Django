@@ -4,22 +4,19 @@ from rest_framework.exceptions import NotFound
 
 
 
-def create_custom_user(validated_data:dict) -> dict:
+def create_custom_user(first_name:str, last_name:str, role:str) -> dict[str, str]:
     """ This function take a validated data from serializer and generate
     username and password for the user and then create a CustomUser object with this data.
     Returns the username and the password in response only one time """
 
-    # taking data from serializer
-    first_name = validated_data['first_name']
-    last_name = validated_data['last_name']
-    role = validated_data['role']
+
 
     # generate username and password
     username = generate_username(first_name, last_name)
     password = generate_password()
 
     # create a CustomUser
-    user = CustomUser.objects.create_user(
+    CustomUser.objects.create_user(
         username=username,
         password=password,
         first_name=first_name,
@@ -34,7 +31,7 @@ def create_custom_user(validated_data:dict) -> dict:
 
 
 
-def reset_password(username:str) -> dict:
+def reset_password(username:str) -> dict[str, str]:
     """This function take a username and check if he exists and
      then change his password to a new and return it."""
 

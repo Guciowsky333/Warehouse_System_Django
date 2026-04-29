@@ -1,15 +1,17 @@
 import secrets
 import string
 from inventory.models import Component, Location, ReleasedComponent
+from users.models import CustomUser
 from rest_framework.exceptions import NotFound
 from inventory.utils import validate_unique_code
 from django.db.models import Sum, Count
 from django.db import transaction
 from history.models import ComponentHistory
+from django.db.models.query import QuerySet
 
 
 
-def change_location(unique_code, location_name, user):
+def change_location(unique_code:str, location_name:str, user:CustomUser) -> dict[str, str]:
     """This function takes component by provided
     unique code and change location to provided one"""
 
@@ -68,7 +70,7 @@ def change_location(unique_code, location_name, user):
         }
 
 
-def release_component(unique_code, department, user):
+def release_component(unique_code:str, department:str, user:CustomUser) -> dict[str, str]:
     """This function takes component from warehouse by unique code
     remove it and create released component model based on data from removing component """
 
@@ -125,15 +127,15 @@ def release_component(unique_code, department, user):
         }
 
 
-def check_location(location):
+def check_location(location_name:str) -> QuerySet[dict]:
     """This function will show users what components are inside provided location
     and also special fields total_boxes - Amount of  boxes with the same code and
     total_quantity - Sum quantity components with the same code """
 
-    if not location:
+    if not location_name:
         raise ValueError('Location is required.')
 
-    location = Location.objects.filter(name=location).first()
+    location = Location.objects.filter(name=location_name).first()
     if not location:
         raise NotFound('Location not found')
 
@@ -150,7 +152,7 @@ def check_location(location):
 
 
 
-def check_component(code):
+def check_component(code:str) -> QuerySet[Component]:
     """This function will show users locations of a component that they provided sorted by date.
     This method is called FIFO(First in First Out) and it will show in what order they should release components """
 
@@ -167,7 +169,7 @@ def check_component(code):
 
 
 
-def check_component_grouped(code):
+def check_component_grouped(code:str) -> QuerySet[dict]:
     """This function will show users locations of a component that they provided but this time it will show total
     quantity of components and total boxes with provided code for each location sorted by total quantity. So if we have 3 boxes
     with the same code at the same location function return they as one and total their quantity and boxes"""
@@ -186,7 +188,7 @@ def check_component_grouped(code):
     return components
 
 
-def component_quantity_at_department(code, department):
+def component_quantity_at_department(code:str, department:str) -> tuple[int, int]:
     """T
     Return total quantity and number of boxes of provided component in provided department
     """
@@ -214,7 +216,9 @@ def component_quantity_at_department(code, department):
 
     return total_boxes, total_quantity
 
-def component_quantity_at_stock(code):
+
+
+def component_quantity_at_stock(code:str) -> tuple[int, int]:
     """
     Return total quantity and number of boxes of provided component in stock
     """
@@ -236,7 +240,7 @@ def component_quantity_at_stock(code):
     return total_boxes, total_quantity
 
 
-def undo_component(unique_code, location_name, user):
+def undo_component(unique_code:str, location_name:str, user:CustomUser) -> dict[str, str]:
     """
     Returns the given component from department back to the warehouse at the specified location.
 
@@ -245,6 +249,8 @@ def undo_component(unique_code, location_name, user):
     specified location ( if it exists amd if this location won't exceed 800 kg limit per location
     after adding this component)
     """
+
+
     with transaction.atomic():
         if not unique_code or not location_name:
             raise ValueError('Unique Code and Location are required.')
@@ -300,7 +306,7 @@ def undo_component(unique_code, location_name, user):
         }
 
 
-def receiving_the_component_into_the_warehouse(code,weight, quantity):
+def receiving_the_component_into_the_warehouse(code:str,weight:float, quantity:int) -> dict[str, str]:
     """
     Create a component model with EXTC location
 

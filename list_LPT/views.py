@@ -87,8 +87,8 @@ class ValidateComponentView(APIView):
         serializer = OrderComponentInputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        code = serializer.data['code']
-        quantity = serializer.data['quantity']
+        code = serializer.validated_data['code']
+        quantity = serializer.validated_data['quantity']
 
         try:
             validate_component(code, quantity)
@@ -146,8 +146,8 @@ class CreateListView(APIView):
         serializer = CreateListLPTInputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        components = serializer.data['components']
-        department = serializer.data['department']
+        components = serializer.validated_data['components']
+        department = serializer.validated_data['department']
         user = request.user
 
 

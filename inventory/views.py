@@ -140,15 +140,13 @@ class CheckLocationView(APIView):
     )
 
     def get(self, request):
-        location = request.query_params.get('location_name')
+        location_name = request.query_params.get('location_name')
 
         try:
-            components = check_location(location)
+            components = check_location(location_name)
             return Response({
-                "message":f"All components on location {location}",
-
-                # Function check_component returns QuerySet of components so we have to convert it to list
-                "components":list(components)
+                "message":f"All components on location {location_name}",
+                "components":components
             },status=200)
 
 
@@ -399,8 +397,8 @@ class UndoComponentView(APIView):
         serializer.is_valid(raise_exception=True)
 
 
-        unique_code = serializer.data['unique_code']
-        location_name = request.data.get('location_name')
+        unique_code = serializer.validated_data['unique_code']
+        location_name = serializer.validated_data['location_name']
         user = request.user
 
         try:
@@ -446,9 +444,10 @@ class ReceivingComponentView(APIView):
         serializer = ReceivingComponentSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        code = serializer.data['code']
-        quantity = serializer.data['quantity']
-        weight = serializer.data['weight']
+        code = serializer.validated_data['code']
+        weight = serializer.validated_data['weight']
+        quantity = serializer.validated_data['quantity']
+
 
         try:
             result = receiving_the_component_into_the_warehouse(code, weight, quantity)
