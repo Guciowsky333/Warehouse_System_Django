@@ -1,5 +1,6 @@
 from users.models import CustomUser
 from users.utils import generate_username, generate_password
+from rest_framework.exceptions import NotFound
 
 
 
@@ -41,7 +42,7 @@ def reset_password(username:str) -> dict:
 
     #check if the user exists
     if not user:
-        raise ValueError("User not found")
+        raise NotFound("User not found")
 
     # generating and set up new password
     new_password = generate_password()

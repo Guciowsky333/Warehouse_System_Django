@@ -16,3 +16,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Last name must contain only letters")
         return value
 
+
+class ResetPasswordSerializer(serializers.Serializer):
+    username = serializers.CharField()
+
