@@ -2,7 +2,7 @@ import secrets
 import string
 
 
-def generate_number_of_list():
+def generate_number_of_list() -> str:
 
     from list_LPT.models import ListLPT
     numbers = string.digits
