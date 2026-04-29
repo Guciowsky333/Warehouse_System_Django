@@ -4,10 +4,12 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.exceptions import NotFound
-from inventory.serializers import ComponentSerializer
+from inventory.serializers import *
 from users.permissions import IsManager
 from rest_framework.pagination import PageNumberPagination
 from users import permissions
+from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParameter
+from rest_framework import serializers
 
 
 # Create your views here.
@@ -15,13 +17,38 @@ from users import permissions
 class ChangeLocationView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        summary='Change Location component',
+        description="""
+        Changes the warehouse location of a component by its unique code.
+    
+        Business rules:
+        - Fields unique_code and location_name are required
+        - Component must exist in warehouse
+        - Component cannot already be released to production
+        - Target location must exist
+        - Target location max weight cannot exceed 800 kg
+        - Target location can not be EXTC because it is a special location to accepting components on storge
+        - Authentication required
+        """,
+        request=ChangeLocationSerializer,
+        responses={
+            200: OpenApiResponse(description='Changed location successfully'),
+            400: OpenApiResponse(description='Validation error / location overweight / component already released / EXTC location'),
+            404: OpenApiResponse(description='Component or Location not found'),
+            401: OpenApiResponse(description='Unauthorized'),
+        }
+    )
+
     def patch(self, request):
-        unique_code = request.data.get('unique_code')
-        location = request.data.get('location')
+        serializer = ChangeLocationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        unique_code = serializer.validated_data['unique_code']
+        location_name = serializer.validated_data['location_name']
         user = request.user
 
         try:
-            result = change_location(unique_code, location, user)
+            result = change_location(unique_code, location_name, user)
             return Response(result, status=200)
 
         # if user provided inappropriate data
@@ -40,9 +67,33 @@ class ChangeLocationView(APIView):
 class ReleasedComponentView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        summary='Release component',
+        description="""
+        Release component by its unique code from the warehouse to 
+        specified department on production.
+        
+        Business rules:
+        - Fields unique_code and department are required
+        - Component must exist in warehouse
+        - Component cannot already be released to production
+        - Specified department must be in allow departments (5000, 5500, 5800, 6000)
+        - Authentication required
+        """,
+        request=ReleasedComponentSerializer,
+        responses={
+            201 : OpenApiResponse(description='Release component successfully'),
+            400 : OpenApiResponse(description='Validation error / wrong department / component already released'),
+            404: OpenApiResponse(description='Component not found'),
+            401: OpenApiResponse(description='Unauthorized'),
+        }
+    )
+
     def post(self, request):
-        unique_code = request.data.get('unique_code')
-        department = request.data.get('department')
+        serializer = ReleasedComponentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        unique_code = serializer.validated_data['unique_code']
+        department = serializer.validated_data['department']
         user = request.user
 
         try:
@@ -64,6 +115,29 @@ class ReleasedComponentView(APIView):
 
 class CheckLocationView(APIView):
     permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary='Check location',
+        description="""
+        Returns all components in specified location grouped by code
+        order by total quantity
+        
+        Business rules:
+        - Field location is required
+        - Location must exist in the warehouse
+        - Authentication required
+        """,
+        parameters=[
+            OpenApiParameter(name='location_name',type=str, required=True)
+        ],
+        responses={
+            200 : OpenApiResponse(description='List of all components on specified location'),
+            400 : OpenApiResponse(description='Location is required'),
+            404: OpenApiResponse(description='Location not found'),
+            401: OpenApiResponse(description='Unauthorized'),
+        }
+
+    )
 
     def get(self, request):
         location = request.query_params.get('location_name')
@@ -90,9 +164,35 @@ class CheckLocationView(APIView):
                 "message": str(e)
             },status=404)
 
+
+
+
 class CheckComponentView(APIView):
     permission_classes = [IsAuthenticated]
     serializer_class = ComponentSerializer
+
+    @extend_schema(
+        summary='Check stock of component',
+        description="""
+        Returns all single object of component and its location with specified code sorted by FIFO
+        (First in First out)
+        
+        Business rules:
+        - Field code is required
+        - Specified code must exist in warehouse
+        - Authentication required
+        """,
+        parameters=[
+            OpenApiParameter(name='code',type=str, required=True),
+            OpenApiParameter(name='page', type=int, required=False, description='Page number'),
+        ],
+        responses={
+            200 : OpenApiResponse(description='List of all components with specified code sorted by FIFO'),
+            400 : OpenApiResponse(description='Code is required'),
+            404: OpenApiResponse(description='Code not found'),
+            401: OpenApiResponse(description='Unauthorized'),
+        }
+    )
 
     def get(self, request):
         code = request.query_params.get('code')
@@ -103,7 +203,10 @@ class CheckComponentView(APIView):
 
             paginator = PageNumberPagination()
             paginator.page_size = 10
+
+            # List all components sorted by FIFO
             page = paginator.paginate_queryset(queryset, request)
+
             serializer = self.serializer_class(page, many=True)
 
             return paginator.get_paginated_response(serializer.data)
@@ -122,6 +225,28 @@ class CheckComponentView(APIView):
 
 class CheckComponentGroupedView(APIView):
     permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary='Check stock of component',
+        description="""
+        Returns all locations of components with specified code grouped by location sorted by
+        total_quantity descending on this location 
+        
+        Business rules:
+        - Field code is required
+        - Specified code must exist in warehouse
+        - Authentication required
+        """,
+        parameters=[
+            OpenApiParameter(name='code',type=str, required=True)
+        ],
+        responses={
+            200: OpenApiResponse(description='List of all components with specified code grouped by location sorted by total quantity'),
+            400 : OpenApiResponse(description='Code is required'),
+            404: OpenApiResponse(description='Code not found'),
+            401: OpenApiResponse(description='Unauthorized'),
+        }
+    )
 
     def get(self, request):
         code = request.query_params.get('code')
@@ -147,6 +272,29 @@ class CheckComponentGroupedView(APIView):
 
 class ShowQuantityInDepartmentView(APIView):
     permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary='Show quantity of component in department',
+        description="""
+        Returns total quantity and total boxes of component with specified code on specified department
+        
+        business rules:
+        - Field code and department are required
+        - Specified department must be in allow departments (5000, 5500, 5800, 6000)
+        - Specified code must exist in ReleasedComponent objects
+        - Authentication required
+        """,
+        parameters=[
+            OpenApiParameter(name='code',type=str, required=True),
+            OpenApiParameter(name='department',type=str, required=True)
+        ],
+        responses={
+            200: OpenApiResponse(description='Total quantity of component in department'),
+            400 : OpenApiResponse(description='Code and department are required / wrong department'),
+            404: OpenApiResponse(description='Code not found'),
+            401: OpenApiResponse(description='Unauthorized'),
+        }
+    )
 
     def get(self, request):
         code = request.query_params.get('code')
@@ -174,6 +322,27 @@ class ShowQuantityInDepartmentView(APIView):
 class ShowQuantityInStockView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        summary='Show quantity of component in stock',
+        description="""
+        Returns total quantity and total boxes of component with specified code in stock
+        
+        business rules:
+        - Field code is required
+        - Specified code must exist in warehouse
+        - Authentication required
+        """,
+        parameters=[
+            OpenApiParameter(name='code',type=str, required=True),
+        ],
+        responses = {
+            200: OpenApiResponse(description='Total quantity of component in stock'),
+            400 : OpenApiResponse(description='Code is required'),
+            404: OpenApiResponse(description='Code not found'),
+            401: OpenApiResponse(description='Unauthorized'),
+        }
+    )
+
     def get(self, request):
         code = request.query_params.get('code')
 
@@ -199,13 +368,43 @@ class ShowQuantityInStockView(APIView):
 class UndoComponentView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        summary='Undo component',
+        description="""
+        Returns a component with a specified unique code from the department back to the warehouse
+        at the provided location
+        
+        business rules:
+        - Fields unique_code and location_name are required
+        - Specified location must exist in warehouse
+        - Specified location can not be EXTC.It is special location for accepting components into the warehouse
+        - Total weight of specified location after adding the component can"t exceed 800 kg
+        - Specified unique code must exist in department
+        - Authentication required
+        """,
+        request=UndoComponentSerializer,
+        responses={
+            201 : OpenApiResponse(description='Successfully undo component'),
+            400 : OpenApiResponse(description='Validation error / location overweight / EXTC location '),
+            404: OpenApiResponse(description='Code or location not found'),
+            401: OpenApiResponse(description='Unauthorized'),
+
+        }
+
+    )
+
     def post(self, request):
-        unique_code = request.data.get('unique_code')
-        location = request.data.get('location')
+
+        serializer = UndoComponentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+
+        unique_code = serializer.data['unique_code']
+        location_name = request.data.get('location_name')
         user = request.user
 
         try:
-            result = undo_component(unique_code, location, user)
+            result = undo_component(unique_code, location_name, user)
             return Response(result, status=201)
 
         except ValueError as e:
@@ -223,10 +422,33 @@ class ReceivingComponentView(APIView):
 
     # only users with the manager role can receive components in the warehous
     permission_classes = [IsAuthenticated, IsManager]
+
+    @extend_schema(
+        summary='Receiving component',
+        description="""
+        Create a component model with specified data with EXTC location, only managers are able 
+        to accepting components from outside to the warehouse.
+        
+        business rules:
+        - Fields code, quantity and weight are required
+        - Authentication required
+        - User must has a manager role 
+        """,
+        request=ReceivingComponentSerializer,
+        responses={
+            201: OpenApiResponse(description='Successfully created component'),
+            400: OpenApiResponse(description='Validation error'),
+            401: OpenApiResponse(description='Unauthorized'),
+            403: OpenApiResponse(description='Permission denied'),
+        }
+    )
     def post(self, request):
-        code = request.data.get('code')
-        quantity = request.data.get('quantity')
-        weight = request.data.get('weight')
+        serializer = ReceivingComponentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        code = serializer.data['code']
+        quantity = serializer.data['quantity']
+        weight = serializer.data['weight']
 
         try:
             result = receiving_the_component_into_the_warehouse(code, weight, quantity)

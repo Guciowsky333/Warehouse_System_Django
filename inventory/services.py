@@ -9,7 +9,7 @@ from history.models import ComponentHistory
 
 
 
-def change_location(unique_code, location, user):
+def change_location(unique_code, location_name, user):
     """This function takes component by provided
     unique code and change location to provided one"""
 
@@ -19,19 +19,25 @@ def change_location(unique_code, location, user):
     with transaction.atomic():
 
 
-        if not unique_code or not location:
+        if not unique_code or not location_name:
             raise ValueError('Unique Code and Location are required.')
+
+
+        # Location EXTC is a special location to accepting components on storge only by manager users
+        if location_name == 'EXTC':
+            raise ValueError('You can locate component on this location this location is used to '
+                             'accepting components on storage from outside')
 
         # Validate unique code in utilis.py
         component = validate_unique_code(unique_code)
 
-        location = Location.objects.filter(name=location).first()
+        location = Location.objects.filter(name=location_name).first()
 
         if not location:
-            raise NotFound(f'Location {location} not found')
+            raise NotFound(f'Location {location_name} not found')
 
         # checking if location don't exceed max weight of location 800 kg
-        if location.total_weight + component.weight > 800 :
+        if location.total_weight + component.weight > 800:
             raise ValueError(f'The location {location.name} already weighs'
                              f' {location.total_weight} kg, you can"t add another {component.weight} kg.Max weight of one location is 800 kg ')
 
@@ -188,6 +194,13 @@ def component_quantity_at_department(code, department):
     if not code or not department:
         raise ValueError('Code and Department are required.')
 
+    # checking departments before queryset
+    allows_departments = ['5000','5500','5800','6000']
+    if department not in allows_departments:
+        raise ValueError(f'Department {department} is not exists')
+
+
+
     result = ReleasedComponent.objects.filter(department=department, code=code).values('code').annotate(
         total_boxes=Count('id'),
         total_quantity=Sum('quantity')
@@ -223,7 +236,7 @@ def component_quantity_at_stock(code):
     return total_boxes, total_quantity
 
 
-def undo_component(unique_code, location, user):
+def undo_component(unique_code, location_name, user):
     """
     Returns the given component from department back to the warehouse at the specified location.
 
@@ -233,10 +246,16 @@ def undo_component(unique_code, location, user):
     after adding this component)
     """
     with transaction.atomic():
-        if not unique_code or not location:
+        if not unique_code or not location_name:
             raise ValueError('Unique Code and Location are required.')
 
-        location = Location.objects.filter(name=location).first()
+
+        if location_name == 'EXTC':
+            raise ValueError('You can not locate component on location EXTC.'
+                             'It is special location for accepting components into the warehouse.')
+
+
+        location = Location.objects.filter(name=location_name).first()
         if not location:
             raise NotFound('Location not found')
 
@@ -292,8 +311,6 @@ def receiving_the_component_into_the_warehouse(code,weight, quantity):
     if not code or not weight or not quantity:
         raise ValueError('Code and Weight and Quantity are required.')
 
-    if not str(quantity).isdigit():
-        raise ValueError('Quantity must be a number')
 
     location_EXTC = Location.objects.filter(name='EXTC').first()
 

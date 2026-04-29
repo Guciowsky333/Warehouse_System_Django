@@ -47,6 +47,8 @@ INSTALLED_APPS = [
     #rest
     'rest_framework',
 
+    'drf_spectacular',
+
     #applications
     'users',
     'inventory',
@@ -141,9 +143,26 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Warehouse System API',
+    'DESCRIPTION': 'API documentation for Warehouse System',
+    'VERSION': '1.0.0',
+    'SECURITY': [{'jwtAuth': []}],
+    'COMPONENTS': {
+        'securitySchemes': {
+            'jwtAuth': {
+                'type': 'http',
+                'scheme': 'bearer',
+                'bearerFormat': 'JWT',
+            }
+        }
+    },
 }

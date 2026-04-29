@@ -27,15 +27,6 @@ def validate_component(code, quantity):
     omit endpoint that check only single component
     """
 
-    if not code or not quantity:
-        raise ValueError('Fields code and quantity are required')
-
-
-
-    if not str(quantity).isdigit():
-        raise ValueError('Quantity must be a number')
-
-    quantity = int(quantity)
     components = Component.objects.filter(list__isnull=True)
 
     if not components.filter(code=code).exists():
@@ -65,8 +56,6 @@ def create_list(order_components:list[Item], department:str, user:CustomUser) ->
     # we use transaction.atomic() to dont create a listLPT when one of the provided components won't pass validations
     with transaction.atomic():
 
-        if not order_components or not department:
-            raise ValueError('Fields order_components and department are required')
 
         list_lpt = ListLPT.objects.create(
             department=department,
@@ -80,7 +69,7 @@ def create_list(order_components:list[Item], department:str, user:CustomUser) ->
             valid_code, valid_quantity = validate_component(code, quantity)
 
             if list_lpt.order_components.filter(code=code).exists():
-                raise ValueError(f'Code {code} is already on this list you can"t ordered it twice')
+                raise ValueError(f'You already added Code {code} to this list you can"t ordered it twice')
 
 
             # taking all components with provided code sorted by date (FIFO)
@@ -121,9 +110,6 @@ def released_component_from_list(list_number: str, unique_code: str, user:Custom
 
     with transaction.atomic():
 
-        if not list_number or not unique_code:
-            raise ValueError('Fields list_number and unique_code are required')
-
         try:
             list_lpt = ListLPT.objects.get(list_number=list_number)
         except ObjectDoesNotExist:
@@ -138,7 +124,7 @@ def released_component_from_list(list_number: str, unique_code: str, user:Custom
         try:
             component = Component.objects.select_for_update().get(unique_code=unique_code)
         except ObjectDoesNotExist:
-            raise NotFound(f'Component {unique_code} not found at stock')
+            raise NotFound(f'Component with unique_code {unique_code} not found at stock')
 
 
         # Taking all components from our list
@@ -148,9 +134,6 @@ def released_component_from_list(list_number: str, unique_code: str, user:Custom
             raise ValueError('This component is not on this list')
 
 
-
-        # and then add a quantity of this component to filed already_released in OrderComponent model
-        # adn to the end removing this component from warehouse
 
         # We create ReleasedComponent and ComponentHistory with data from our component
         ReleasedComponent.objects.create(
@@ -240,7 +223,7 @@ def get_optimize_list_order_components(list_number:str) -> ListLPT:
     list_lpt = ListLPT.objects.prefetch_related(
         Prefetch(
             'order_components',
-            OrderComponent.objects.order_by('-quantity')
+            queryset=OrderComponent.objects.order_by('-quantity')
         )
     ).get(list_number=list_number)
 
@@ -269,6 +252,9 @@ def get_optimize_list_components(list_number:str) -> ListLPT:
             queryset=Component.objects.select_related('location').order_by('location__name'),
         )
     ).get(list_number=list_number)
+
+    if list_lpt.closed:
+        raise ValueError('This list has already been closed')
 
     return list_lpt
 

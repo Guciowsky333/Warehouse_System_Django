@@ -8,16 +8,33 @@ from list_LPT.services import *
 from list_LPT.permissions import IsForemanOrHigher
 from list_LPT.serializers import *
 from rest_framework.pagination import PageNumberPagination
+from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParameter
 
 
 # Create your views here.
 class ShowAllListLPTAPIView(APIView):
 
     permission_classes = [IsAuthenticated]
-    serializer_class = ListLPTSerializer
+
+    @extend_schema(
+        summary="Shows all lists",
+        description="""
+        Shows all lists sorted by date starting with the newest
+        
+        Business rules:
+        - Authentication required
+        """,
+        parameters=[
+            OpenApiParameter(name='page',required=False, description='Page number'),
+        ],
+        responses={
+            200: OpenApiResponse(description='All lists sorted by date'),
+            401: OpenApiResponse(description='Unauthorized')
+        }
+    )
 
     def get(self, request):
-        queryset = ListLPT.objects.all().order_by('-date')
+        queryset = show_all_list()
 
         # We use pagination here because in the future we can have a lot of lists in the database
 
@@ -25,13 +42,9 @@ class ShowAllListLPTAPIView(APIView):
         paginator.page_size = 10
         page = paginator.paginate_queryset(queryset, request)
 
-        serializer = self.serializer_class(page, many=True)
+        serializer = ListLPTSerializer(page, many=True)
 
         return paginator.get_paginated_response(serializer.data)
-
-
-
-
 
 
 
@@ -41,10 +54,41 @@ class ShowAllListLPTAPIView(APIView):
 class ValidateComponentView(APIView):
     permission_classes = [IsAuthenticated, IsForemanOrHigher]
 
+    @extend_schema(
+        summary='Validate single component',
+        description="""
+        Validates a single component before adding it to the order list.
+
+        This endpoint is designed for real-time validation during list creation.
+        Frontend should call this endpoint after each component is entered by the user,
+        so they receive immediate feedback without waiting for the entire list to be submitted.
+
+        Business rules:
+        - Fields code and quantity are required
+        - Component with provided code must exist in warehouse
+        - Quantity cannot exceed available stock
+        - Component cannot be already assigned to another list
+        - User must has at least foreman role or higher
+        - Authentication required
+        """,
+        request=OrderComponentInputSerializer,
+        responses={
+            200: OpenApiResponse(description='Validation was successful'),
+            400 : OpenApiResponse(description='User want order too much quantity of component'),
+            404: OpenApiResponse(description='Code not found'),
+            401: OpenApiResponse(description='Unauthorized'),
+            403: OpenApiResponse(description='Permission denied'),
+
+        }
+    )
+
 
     def post(self, request):
-        code = request.data.get('code')
-        quantity = request.data.get('quantity')
+        serializer = OrderComponentInputSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        code = serializer.data['code']
+        quantity = serializer.data['quantity']
 
         try:
             validate_component(code, quantity)
@@ -69,14 +113,43 @@ class CreateListView(APIView):
     # only users with foreman role or higher are albe to create a list
     permission_classes = [IsAuthenticated, IsForemanOrHigher]
 
-    serializer_class = ListLPTCreateSerializer
+    @extend_schema(
+        summary='Create list with provided components',
+        description="""
+        This endpoint creates a new list with provided components and department.
+        
+        Each component goes through the same validation as in ValidateComponentView, so even 
+        if user skip ValidateComponentView endpoint components will still goes through validations
+        
+        Business rules:
+        - Fields components and department are required
+        - Department must be one of : 5000, 5500, 5800, 6000
+        - Each component must exist in the warehouse with lower or equal quantity that user want to order 
+        - User cannot order the same code of component more than once per list 
+        - User must have at least foreman role or higher to create a list
+        - Authentication required
+        """,
+        request=CreateListLPTInputSerializer,
+        responses={
+            201: OpenApiResponse(description='Create list was successful'),
+            400 : OpenApiResponse(description='Validation error / code has been already on this list / dont enough quantity at stock'),
+            404: OpenApiResponse(description='Code not found'),
+            401: OpenApiResponse(description='Unauthorized'),
+            403: OpenApiResponse(description='Permission denied'),
+
+        }
+    )
+
+
 
     def post(self, request):
-        components = request.data.get('components')
-        department = request.data.get('department')
-        user = request.user
-        serializer = self.serializer_class(data=request.data)
+        serializer = CreateListLPTInputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+
+        components = serializer.data['components']
+        department = serializer.data['department']
+        user = request.user
+
 
         try:
             result = create_list(components, department, user)
@@ -97,9 +170,39 @@ class CreateListView(APIView):
 class ReleaseComponentFromListView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        summary='Release component from list',
+        description="""
+        This endpoint is used to release provided component from provided list.
+        
+        Into each list at the moment of creating components are assigned
+        by FIFO method (First in First out).This endpoint check whether 
+        provided unique_code is on the provided list and if yes release it from the warehouse 
+        to department that provided list has been created for and create ReleasedComponent model with the same data.
+        If all components are released then this endpoint should closed provided list.
+        
+        Business rules:
+        - Fields list_number and unique_code are required
+        - List must exist in the database 
+        - Specified list cannot be closed 
+        - Specified unique_code must exist in the warehouse and must be assigned to provided list
+        - Authentication required
+        """,
+        request=ReleaseComponentFromListSerializer,
+        responses={
+            201 : OpenApiResponse(description='Correct release of the component from the list'),
+            400: OpenApiResponse(description='Validation error / Provided list is closed / Provided unique_code is not on provided list'),
+            404 : OpenApiResponse(description='List or component not found '),
+            401: OpenApiResponse(description='Unauthorized'),
+        }
+    )
+
     def post(self, request):
-        list_number = request.data.get('list_number')
-        unique_code = request.data.get('unique_code')
+        serializer = ReleaseComponentFromListSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        list_number = serializer.data['list_number']
+        unique_code = serializer.data['unique_code']
         user = request.user
 
         try:
@@ -117,18 +220,35 @@ class ReleaseComponentFromListView(APIView):
             }, status=404)
 
 class ListLPTDetailsView(APIView):
-    """This endpoint is used to show users detail about provided list such as
-    how many components are in this list and how many has been released so far, and more"""
-
 
     permission_classes = [IsAuthenticated]
-    serializer_class = ListLPTDetailsSerializer
+
+    @extend_schema(
+        summary='Shows details of provided list',
+        description="""
+        Shows whole details about provided list such as who created this list, whether this list is closed or not,
+        how many components are inside this list and how many of them has been released so far and more.
+        
+        Business rules:
+        - Fields list_number is required
+        - List must exist
+        - Authentication required
+        """,
+        responses={
+            200 : OpenApiResponse(description='Details of provided list'),
+            400 : OpenApiResponse(description='Validations error'),
+            404:OpenApiResponse(description='List not found '),
+            401:OpenApiResponse(description='Unauthorized'),
+        }
+
+    )
+
 
     def get(self, request, list_number):
 
         try:
             result = get_optimize_list_order_components(list_number)
-            serializer = self.serializer_class(result)
+            serializer = ListLPTDetailsSerializer(result)
             return Response(serializer.data, status=200)
 
         except NotFound as e:
@@ -146,20 +266,37 @@ class ListLPTDetailsView(APIView):
 
 
 class PrintListView(APIView):
-    """
-    This endpoint is used to print whole physical list on the warehouse
 
-    It will be useful for the warehouse workers to have physical list with all components
-    that they have to release sorted by location
-    """
     permission_classes = [IsAuthenticated]
-    serializer_class = PrintListLPTSerializer
+
+
+    @extend_schema(
+        summary='Print list',
+        description="""
+        This endpoint is used to print whole physical list on the warehouse
+        
+        It will be useful for the warehouse workers to have physical list with all components 
+        that they have to release sorted by location with  their unique_codes and locations
+        
+        Business rules:
+        - Fields list_number is required
+        - List must exist
+        - Specified list cannot be closed 
+        - Authentication required
+        """,
+        responses={
+        200: OpenApiResponse(description='Print list on the warehouse'),
+        400 : OpenApiResponse(description='Validations error / Provided list is closed'),
+        404:OpenApiResponse(description='List not found '),
+        401:OpenApiResponse(description='Unauthorized'),
+        }
+    )
 
     def get(self, request, list_number):
 
         try:
             result = get_optimize_list_components(list_number)
-            serializer = self.serializer_class(result)
+            serializer = PrintListLPTSerializer(result)
             return Response(serializer.data, status=200)
 
         except NotFound as e:

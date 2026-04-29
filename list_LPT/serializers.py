@@ -5,6 +5,38 @@ from inventory.serializers import ComponentSerializer
 from django.db.models import Sum
 
 
+class OrderComponentInputSerializer(serializers.Serializer):
+    code = serializers.CharField()
+    quantity = serializers.IntegerField()
+
+class CreateListLPTInputSerializer(serializers.Serializer):
+    department = serializers.ChoiceField(
+        choices= [
+            '5000',
+            '5500',
+            '5800',
+            '6000',
+        ]
+    )
+    components = serializers.ListField(
+        child=OrderComponentInputSerializer()
+    )
+
+class ReleaseComponentFromListSerializer(serializers.Serializer):
+    list_number = serializers.CharField(max_length=10)
+    unique_code = serializers.CharField(max_length=15)
+
+
+
+
+
+
+
+
+
+
+
+
 class ListLPTSerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField()
 
@@ -14,21 +46,6 @@ class ListLPTSerializer(serializers.ModelSerializer):
 
     def get_user(self, obj):
         return obj.user.full_name()
-
-
-
-class ListLPTCreateSerializer(serializers.Serializer):
-    """
-    This serializer is used to validation department that user provided in body
-    """
-    department = serializers.ChoiceField(choices=ListLPT.DEPARTMENTS)
-
-
-    def to_internal_value(self, data):
-        if isinstance(data.get('department'), int):
-            data['department'] = str(data['department'])
-        return super().to_internal_value(data)
-
 
 
 

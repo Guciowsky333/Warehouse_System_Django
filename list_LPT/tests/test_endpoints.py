@@ -324,7 +324,7 @@ def test_ReleaseComponentFromListView(test_warehouseman, test_list_lpt, test_loc
         # User provided not exist list
         ('wrong_list', 'unique_code_1', 'List number wrong_list not found', status.HTTP_404_NOT_FOUND ),
         # User provided not exist component
-        ('number_1', 'wrong_unique_code', 'Component wrong_unique_code not found at stock', status.HTTP_404_NOT_FOUND ),
+        ('number_1', 'wrong_component', 'Component with unique_code wrong_component not found at stock', status.HTTP_404_NOT_FOUND ),
         # User provided component that is not at the list
         ('number_1', 'unique_code_2', 'This component is not on this list', status.HTTP_400_BAD_REQUEST ),
 
@@ -342,6 +342,7 @@ def test_ReleaseComponentFromListView_invalid_data(list_number, unique_code, exp
         'unique_code': unique_code,
     }
     response = client.post('/api/list_LPT/release_component_from_list/', body, format='json')
+    print(response.data)
 
     assert response.status_code == expected_status
     assert response.data['message'] == expected_message
@@ -439,12 +440,16 @@ def test_ListLPTDetailView_requires_authentication(test_list_lpt):
 
 @pytest.mark.parametrize(
     'list_number, expected_status',[
+        # List not exist
         ('wrong_number', status.HTTP_404_NOT_FOUND),
+        # List is closed
+        ('number_2', status.HTTP_400_BAD_REQUEST),
+        # Appropriate data
         ('number_1', status.HTTP_200_OK),
     ]
 )
 
-def test_PrintListView(list_number, expected_status, test_warehouseman, test_list_lpt,
+def test_PrintListView(list_number, expected_status, test_warehouseman, test_list_lpt, test_list_lpt_closed,
                        test_location_A10101, test_location_A10102, test_location_B12103):
     """
     In this test we assigned 3 components to our list each one with different location, and we
