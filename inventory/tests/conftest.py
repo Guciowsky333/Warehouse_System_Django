@@ -1,6 +1,9 @@
 import pytest
-from inventory.models import Location, Component, ReleasedComponent
+
+from inventory.models import Component, Location, ReleasedComponent
 from users.models import CustomUser
+
+
 # fixtures
 @pytest.fixture
 def test_user(db):

@@ -1,6 +1,6 @@
-from django.contrib import admin
 from django.urls import path
-from history.views import *
+
+from history.views import ComponentsHistoryView
 
 urlpatterns = [
     path('',ComponentsHistoryView.as_view(), name='component_history'),

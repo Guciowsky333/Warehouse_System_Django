@@ -1,16 +1,29 @@
-from django.shortcuts import render
-from inventory.services import *
-from rest_framework.views import APIView
+from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
+from rest_framework.exceptions import NotFound
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.exceptions import NotFound
-from inventory.serializers import *
-from users.permissions import IsManager
-from rest_framework.pagination import PageNumberPagination
-from users import permissions
-from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParameter
-from rest_framework import serializers
+from rest_framework.views import APIView
 
+from inventory.serializers import (
+    ChangeLocationSerializer,
+    ComponentSerializer,
+    ReceivingComponentSerializer,
+    ReleasedComponentSerializer,
+    UndoComponentSerializer,
+)
+from inventory.services import (
+    change_location,
+    check_component,
+    check_component_grouped,
+    check_location,
+    component_quantity_at_department,
+    component_quantity_at_stock,
+    receiving_the_component_into_the_warehouse,
+    release_component,
+    undo_component,
+)
+from users.permissions import IsManager
 
 # Create your views here.
 

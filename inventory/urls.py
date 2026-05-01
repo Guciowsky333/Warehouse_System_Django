@@ -1,6 +1,16 @@
-from django.contrib import admin
 from django.urls import path
-from inventory.views import *
+
+from inventory.views import (
+                             ChangeLocationView,
+                             CheckComponentGroupedView,
+                             CheckComponentView,
+                             CheckLocationView,
+                             ReceivingComponentView,
+                             ReleasedComponentView,
+                             ShowQuantityInDepartmentView,
+                             ShowQuantityInStockView,
+                             UndoComponentView,
+)
 
 urlpatterns = [
     path('change_location/', ChangeLocationView.as_view(), name='change_location'),

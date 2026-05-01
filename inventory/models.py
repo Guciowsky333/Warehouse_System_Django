@@ -1,7 +1,9 @@
 from django.db import models
-from inventory.utils import generate_unique_code
 from django.db.models import Sum
+
+from inventory.utils import generate_unique_code
 from list_LPT.models import ListLPT
+
 
 # Create your models here.
 class Location(models.Model):

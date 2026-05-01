@@ -1,8 +1,13 @@
-from django.contrib import admin
 from django.urls import path
-from list_LPT.views import *
 
-
+from list_LPT.views import (
+                            CreateListView,
+                            ListLPTDetailsView,
+                            PrintListView,
+                            ReleaseComponentFromListView,
+                            ShowAllListLPTAPIView,
+                            ValidateComponentView,
+)
 
 urlpatterns = [
     path('show_all/', ShowAllListLPTAPIView.as_view(), name='show_all'),

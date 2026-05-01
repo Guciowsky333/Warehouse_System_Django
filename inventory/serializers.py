@@ -1,5 +1,7 @@
 from rest_framework import serializers
-from inventory.models import *
+
+from inventory.models import Component
+
 
 class ChangeLocationSerializer(serializers.Serializer):
     unique_code = serializers.CharField(max_length=15)

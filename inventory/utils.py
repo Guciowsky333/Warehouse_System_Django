@@ -1,10 +1,8 @@
 import secrets
 import string
 
-from rest_framework.exceptions import NotFound
 from django.core.exceptions import ObjectDoesNotExist
-
-
+from rest_framework.exceptions import NotFound
 
 
 def generate_unique_code() -> str:
@@ -22,7 +20,7 @@ def generate_unique_code() -> str:
             return unique_code
 
 
-def validate_unique_code(unique_code:str) -> 'Component':
+def validate_unique_code(unique_code:str):
     """This function validates a unique code
     checking whether provided unique code has been released from warehouse,
     and now it is at the production (if yes return a message with special status "4"

@@ -1,12 +1,9 @@
-from urllib import response
 
 import pytest
 from rest_framework import status
 from rest_framework.test import APIClient
 
-
-from history.models import *
-
+from history.models import ComponentHistory
 
 
 # Test for api/history/by_code/

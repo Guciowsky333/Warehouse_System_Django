@@ -1,14 +1,12 @@
-import secrets
-import string
-from inventory.models import Component, Location, ReleasedComponent
-from users.models import CustomUser
-from rest_framework.exceptions import NotFound
-from inventory.utils import validate_unique_code
-from django.db.models import Sum, Count
 from django.db import transaction
-from history.models import ComponentHistory
+from django.db.models import Count, Sum
 from django.db.models.query import QuerySet
+from rest_framework.exceptions import NotFound
 
+from history.models import ComponentHistory
+from inventory.models import Component, Location, ReleasedComponent
+from inventory.utils import validate_unique_code
+from users.models import CustomUser
 
 
 def change_location(unique_code:str, location_name:str, user:CustomUser) -> dict[str, str]:
@@ -95,7 +93,7 @@ def release_component(unique_code:str, department:str, user:CustomUser) -> dict[
         component = validate_unique_code(unique_code)
 
         # Creating released component model
-        released_component = ReleasedComponent.objects.create(
+        ReleasedComponent.objects.create(
             code = component.code,
             unique_code = component.unique_code,
             weight = component.weight,

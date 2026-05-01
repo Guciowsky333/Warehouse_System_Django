@@ -1,7 +1,7 @@
-from users.models import CustomUser
-from users.utils import generate_username, generate_password
 from rest_framework.exceptions import NotFound
 
+from users.models import CustomUser
+from users.utils import generate_password, generate_username
 
 
 def create_custom_user(first_name:str, last_name:str, role:str) -> dict[str, str]:

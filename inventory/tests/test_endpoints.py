@@ -1,13 +1,14 @@
 
 
+from datetime import date
+
 import pytest
-from inventory.models import Location, Component, ReleasedComponent
-from inventory.tests.test_models import test_component_unique_code
-from users.models import CustomUser
 from rest_framework import status
 from rest_framework.test import APIClient
-from datetime import date
+
 from history.models import ComponentHistory
+from inventory.models import Component, ReleasedComponent
+
 
 # test for /api/inventory/change_location/
 @pytest.mark.parametrize(

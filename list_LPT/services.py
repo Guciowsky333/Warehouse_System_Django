@@ -1,15 +1,15 @@
-from inventory.services import component_quantity_at_stock
-from list_LPT.models import *
-from rest_framework.exceptions import NotFound
-from inventory.models import Component, ReleasedComponent
-from users.models import CustomUser
-from history.models import ComponentHistory
-from django.db.models import Sum, Prefetch
-
 from typing import TypedDict
-from django.db.models.query import QuerySet
-from django.db import transaction
+
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
+from django.db.models import Prefetch, Sum
+from django.db.models.query import QuerySet
+from rest_framework.exceptions import NotFound
+
+from history.models import ComponentHistory
+from inventory.models import Component, ReleasedComponent
+from list_LPT.models import ListLPT, OrderComponent
+from users.models import CustomUser
 
 
 def show_all_list() -> QuerySet[ListLPT]:

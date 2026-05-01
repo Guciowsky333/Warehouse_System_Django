@@ -1,7 +1,8 @@
 
-from history.models import *
 from rest_framework import serializers
-from history.models import *
+
+from history.models import ComponentHistory
+
 
 class ComponentHistoryQuerySerializer(serializers.Serializer):
     code = serializers.CharField(required=False)

@@ -1,14 +1,14 @@
 
-from django.shortcuts import render
-from rest_framework.views import APIView
+from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
+from rest_framework.exceptions import NotFound
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.exceptions import NotFound
-from history.models import ComponentHistory
-from history.serializers import *
-from history.services import *
-from rest_framework.pagination import PageNumberPagination
-from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParameter
+from rest_framework.views import APIView
+
+from history.serializers import ComponentHistoryQuerySerializer, ComponentHistorySerializer
+from history.services import history
+
 # Create your views here.
 
 

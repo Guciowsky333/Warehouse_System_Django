@@ -1,14 +1,27 @@
-from django.shortcuts import render
-from rest_framework.views import APIView
-from rest_framework.response import Response
+from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
 from rest_framework.exceptions import NotFound
-from rest_framework.permissions import IsAuthenticated
-from list_LPT.models import *
-from list_LPT.services import *
-from list_LPT.permissions import IsForemanOrHigher
-from list_LPT.serializers import *
 from rest_framework.pagination import PageNumberPagination
-from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParameter
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from list_LPT.permissions import IsForemanOrHigher
+from list_LPT.serializers import (
+    CreateListLPTInputSerializer,
+    ListLPTDetailsSerializer,
+    ListLPTSerializer,
+    OrderComponentInputSerializer,
+    PrintListLPTSerializer,
+    ReleaseComponentFromListSerializer,
+)
+from list_LPT.services import (
+    create_list,
+    get_optimize_list_components,
+    get_optimize_list_order_components,
+    released_component_from_list,
+    show_all_list,
+    validate_component,
+)
 
 
 # Create your views here.

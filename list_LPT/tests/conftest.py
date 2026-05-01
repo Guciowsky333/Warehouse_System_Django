@@ -1,9 +1,8 @@
 import pytest
-from inventory.models import *
-from users.models import *
-from list_LPT.models import *
 
-
+from inventory.models import Component, Location
+from list_LPT.models import ListLPT
+from users.models import CustomUser
 
 
 @pytest.fixture

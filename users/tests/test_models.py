@@ -1,5 +1,7 @@
 import pytest
+
 from users.models import CustomUser
+
 
 @pytest.mark.django_db
 def test_CustomUser():

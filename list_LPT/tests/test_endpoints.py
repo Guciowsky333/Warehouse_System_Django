@@ -1,14 +1,13 @@
-import json
+
 
 import pytest
-
-from inventory.models import *
-from list_LPT.models import *
-from history.models import *
 from rest_framework import status
 from rest_framework.test import APIClient
-from rest_framework.exceptions import NotFound
-from datetime import datetime
+
+from history.models import ComponentHistory
+from inventory.models import Component, ReleasedComponent
+from list_LPT.models import ListLPT, OrderComponent
+
 
 # Test for /api/list_LPT/show_all/
 def test_ShowAllListLPTAPIView(test_warehouseman, test_user_foreman):
@@ -84,7 +83,7 @@ def test_ValidateComponentView(code, quantity, expected_status, test_user_forema
         'quantity': quantity,
     }
 
-    response = client.post(f'/api/list_LPT/validate_component/', body, format='json')
+    response = client.post('/api/list_LPT/validate_component/', body, format='json')
     assert response.status_code == expected_status
 
 def test_ValidateComponentView_user_with_warehouseman_role(test_user_warehouseman):
@@ -293,8 +292,8 @@ def test_ReleaseComponentFromListView(test_warehouseman, test_list_lpt, test_loc
     ).exists()
 
     # We didn't release whole quantity from list so status list and OrderComponent should be still false
-    assert test_list_lpt.closed == False
-    assert order_component_1.everything_released == False
+    assert not test_list_lpt.closed
+    assert not order_component_1.everything_released
 
     assert order_component_1.already_released_quantity == component_15016610_1.quantity
     assert order_component_1.already_released_boxes == 1
@@ -312,8 +311,8 @@ def test_ReleaseComponentFromListView(test_warehouseman, test_list_lpt, test_loc
     assert response.status_code == status.HTTP_201_CREATED
     assert not Component.objects.filter(unique_code=component_15016610_2.unique_code).exists()
 
-    assert order_component_1.everything_released == True
-    assert test_list_lpt.closed == True
+    assert order_component_1.everything_released
+    assert test_list_lpt.closed
     assert order_component_1.already_released_quantity == component_15016610_1.quantity + component_15016610_2.quantity
     assert order_component_1.already_released_boxes == 2
 

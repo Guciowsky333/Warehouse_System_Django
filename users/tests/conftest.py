@@ -1,5 +1,8 @@
 import pytest
+
 from users.models import CustomUser
+
+
 # fixtures
 @pytest.fixture
 def test_user(db):

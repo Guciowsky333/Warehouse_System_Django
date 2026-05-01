@@ -1,5 +1,6 @@
-import string
 import secrets
+import string
+
 
 def generate_username(first_name:str, last_name:str) -> str:
     """Generates username in format:

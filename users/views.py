@@ -1,15 +1,12 @@
-from django.shortcuts import render
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework.exceptions import NotFound
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
-
-from users import serializers
 from users.permissions import IsManager
 from users.serializers import CustomUserSerializer, ResetPasswordSerializer
 from users.services import create_custom_user, reset_password
-from drf_spectacular.utils import extend_schema, OpenApiResponse
 
 # Create your views here.
 

@@ -1,8 +1,10 @@
 import pytest
 
 from history.models import ComponentHistory
-from inventory.models import *
-from users.models import *
+from inventory.models import Component, Location
+from users.models import CustomUser
+
+
 @pytest.fixture
 def test_location(db):
     return Location.objects.create(

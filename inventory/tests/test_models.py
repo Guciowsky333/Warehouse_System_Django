@@ -1,6 +1,3 @@
-import pytest
-from inventory.models import Location, Component
-from django.utils import timezone
 
 
 

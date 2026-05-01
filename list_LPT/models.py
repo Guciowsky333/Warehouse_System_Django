@@ -1,4 +1,5 @@
 from django.db import models
+
 from list_LPT.utils import generate_number_of_list
 from users.models import CustomUser
 

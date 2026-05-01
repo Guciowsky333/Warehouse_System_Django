@@ -1,8 +1,7 @@
 from rest_framework import serializers
-from list_LPT.models import ListLPT, OrderComponent
-from rest_framework.serializers import ModelSerializer
+
 from inventory.serializers import ComponentSerializer
-from django.db.models import Sum
+from list_LPT.models import ListLPT, OrderComponent
 
 
 class OrderComponentInputSerializer(serializers.Serializer):

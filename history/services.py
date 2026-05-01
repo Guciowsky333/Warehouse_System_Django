@@ -1,10 +1,10 @@
 
-from rest_framework.exceptions import NotFound
-from django.db import transaction
-from history.models import ComponentHistory
 from typing import TypedDict
-from django.db.models import QuerySet
 
+from django.db.models import QuerySet
+from rest_framework.exceptions import NotFound
+
+from history.models import ComponentHistory
 
 
 class HistoryResult(TypedDict):
