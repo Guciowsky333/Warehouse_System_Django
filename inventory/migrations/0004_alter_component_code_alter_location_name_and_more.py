@@ -4,25 +4,24 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('inventory', '0003_component_list'),
+        ("inventory", "0003_component_list"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='component',
-            name='code',
+            model_name="component",
+            name="code",
             field=models.CharField(db_index=True, max_length=10),
         ),
         migrations.AlterField(
-            model_name='location',
-            name='name',
+            model_name="location",
+            name="name",
             field=models.CharField(max_length=6, unique=True),
         ),
         migrations.AlterField(
-            model_name='releasedcomponent',
-            name='code',
+            model_name="releasedcomponent",
+            name="code",
             field=models.CharField(db_index=True, max_length=10),
         ),
     ]

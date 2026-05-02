@@ -14,8 +14,7 @@ def test_CustomUser():
     )
 
     assert user.username == "test_login"
-    assert user.check_password('test_password')
+    assert user.check_password("test_password")
     assert user.first_name == "test_first_name"
     assert user.last_name == "test_last_name"
     assert user.role == "test_role"
-

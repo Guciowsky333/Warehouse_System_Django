@@ -7,29 +7,34 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('list_LPT', '0006_alter_ordercomponent_list'),
+        ("list_LPT", "0006_alter_ordercomponent_list"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='listlpt',
-            name='date',
+            model_name="listlpt",
+            name="date",
             field=models.DateField(auto_now_add=True, default=django.utils.timezone.now),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='listlpt',
-            name='department',
-            field=models.CharField(choices=[('5000', '5000'), ('5500', '5500'), ('5800', '5800'), ('6000', '6000')], default=5000, max_length=4),
+            model_name="listlpt",
+            name="department",
+            field=models.CharField(
+                choices=[("5000", "5000"), ("5500", "5500"), ("5800", "5800"), ("6000", "6000")],
+                default=5000,
+                max_length=4,
+            ),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='listlpt',
-            name='user',
-            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL),
+            model_name="listlpt",
+            name="user",
+            field=models.ForeignKey(
+                default=1, on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL
+            ),
             preserve_default=False,
         ),
     ]

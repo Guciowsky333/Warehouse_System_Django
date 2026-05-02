@@ -1,4 +1,3 @@
-
 from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
 from rest_framework.exceptions import NotFound
 from rest_framework.pagination import PageNumberPagination
@@ -16,7 +15,7 @@ class ComponentsHistoryView(APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
-        summary='Show history of components',
+        summary="Show history of components",
         description="""
         Returns whole history of components by filters such as : code, unique_code or user_name,'
         User has to specified only one filter and he also can specified action filter to
@@ -30,23 +29,19 @@ class ComponentsHistoryView(APIView):
         - Authentication required
         """,
         parameters=[
-            OpenApiParameter(name='code',type=str, required=False),
-            OpenApiParameter(name='unique_code',type=str, required=False),
-            OpenApiParameter(name='user_name',type=str, required=False),
-            OpenApiParameter(name='action',type=str, required=False),
-            OpenApiParameter(name='page', type=int, required=False, description='Page number'),
+            OpenApiParameter(name="code", type=str, required=False),
+            OpenApiParameter(name="unique_code", type=str, required=False),
+            OpenApiParameter(name="user_name", type=str, required=False),
+            OpenApiParameter(name="action", type=str, required=False),
+            OpenApiParameter(name="page", type=int, required=False, description="Page number"),
         ],
         responses={
-            200: OpenApiResponse(description='Returns whole history of components'),
-            400: OpenApiResponse(description='Validation error'),
-            404: OpenApiResponse(description='History with provided filters not found'),
-            401: OpenApiResponse(description='Unauthorized'),
-        }
-        
+            200: OpenApiResponse(description="Returns whole history of components"),
+            400: OpenApiResponse(description="Validation error"),
+            404: OpenApiResponse(description="History with provided filters not found"),
+            401: OpenApiResponse(description="Unauthorized"),
+        },
     )
-
-
-
     def get(self, request):
 
         # Validate specified filters
@@ -55,14 +50,14 @@ class ComponentsHistoryView(APIView):
 
         data = query_serializer.data
 
-        code = data.get('code')
-        unique_code = data.get('unique_code')
-        user_name = data.get('user_name')
-        action = data.get('action')
+        code = data.get("code")
+        unique_code = data.get("unique_code")
+        user_name = data.get("user_name")
+        action = data.get("action")
 
         try:
             result = history(code, unique_code, user_name, action)
-            message, queryset = result['message'], result['history']
+            message, queryset = result["message"], result["history"]
 
             paginator = PageNumberPagination()
             paginator.page_size = 10
@@ -71,19 +66,22 @@ class ComponentsHistoryView(APIView):
             response_serializer = ComponentHistorySerializer(page, many=True)
 
             response = paginator.get_paginated_response(response_serializer.data)
-            response.data['message'] = message
-
+            response.data["message"] = message
 
             return response
 
-
-
         except NotFound as e:
-            return Response({
-                'message':str(e),
-            }, status=404)
+            return Response(
+                {
+                    "message": str(e),
+                },
+                status=404,
+            )
 
         except ValueError as e:
-            return Response({
-                'message':str(e),
-            }, status=400)
+            return Response(
+                {
+                    "message": str(e),
+                },
+                status=400,
+            )

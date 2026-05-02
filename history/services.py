@@ -1,4 +1,3 @@
-
 from typing import TypedDict
 
 from django.db.models import QuerySet
@@ -10,7 +9,9 @@ from history.models import ComponentHistory
 class HistoryResult(TypedDict):
     message: str
     history: QuerySet
-def history(code:str | None, unique_code:str | None, user_name:str | None, action:str | None) -> HistoryResult:
+
+
+def history(code: str | None, unique_code: str | None, user_name: str | None, action: str | None) -> HistoryResult:
     """
     Return whole history of components filter by provided field, allow fields : (code, unique_code, user_name)
     user have to choose only one.User also can choose action of components allowed actions :
@@ -23,47 +24,30 @@ def history(code:str | None, unique_code:str | None, user_name:str | None, actio
 
     # checking if user provided correct action
     if action:
-        allow_actions = ['change_location', 'component_release', 'component_undo']
+        allow_actions = ["change_location", "component_release", "component_undo"]
         if action not in allow_actions:
-            raise NotFound('Wrong action')
+            raise NotFound("Wrong action")
         queryset = queryset.filter(action=action)
 
-
     if code:
-        history_by_code = queryset.filter(code=code).order_by('-date')
+        history_by_code = queryset.filter(code=code).order_by("-date")
         if not history_by_code.exists():
-            raise NotFound(f'History of code {code} not found')
+            raise NotFound(f"History of code {code} not found")
 
-        return {
-            'message': f'History of code {code}',
-            'history': history_by_code
-        }
-
-
+        return {"message": f"History of code {code}", "history": history_by_code}
 
     if unique_code:
-        history_by_unique_code = queryset.filter(unique_code=unique_code).order_by('-date')
+        history_by_unique_code = queryset.filter(unique_code=unique_code).order_by("-date")
         if not history_by_unique_code.exists():
-            raise NotFound(f'History of unique code {unique_code} not found')
+            raise NotFound(f"History of unique code {unique_code} not found")
 
-        return {
-            'message':f'History of unique code {unique_code}',
-            'history':history_by_unique_code
-        }
-
+        return {"message": f"History of unique code {unique_code}", "history": history_by_unique_code}
 
     if user_name:
-        history_by_user_name = queryset.filter(full_name=user_name).order_by('-date')
+        history_by_user_name = queryset.filter(full_name=user_name).order_by("-date")
         if not history_by_user_name.exists():
-            raise NotFound(f'History of user name {user_name} not found')
+            raise NotFound(f"History of user name {user_name} not found")
 
-        return {
-            'message':f'History of user {user_name}',
-            'history': history_by_user_name
-        }
+        return {"message": f"History of user {user_name}", "history": history_by_user_name}
 
-
-
-    raise ValueError('code, unique_code, user_name you have to provided one of this filed')
-
-
+    raise ValueError("code, unique_code, user_name you have to provided one of this filed")

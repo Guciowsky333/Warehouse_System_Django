@@ -15,6 +15,7 @@ def test_user(db):
         role="test_role1",
     )
 
+
 @pytest.fixture
 def test_manager(db):
     return CustomUser.objects.create_user(
@@ -25,13 +26,16 @@ def test_manager(db):
         role="manager",
     )
 
+
 @pytest.fixture
 def test_location(db):
     return Location.objects.create(name="A10101")
 
+
 @pytest.fixture
 def test_location2(db):
     return Location.objects.create(name="A10102")
+
 
 @pytest.fixture
 def test_location_EXTC(db):
@@ -47,6 +51,8 @@ def test_component(db, test_location):
         weight=20,
         quantity=1000,
     )
+
+
 @pytest.fixture
 def test_component2(db, test_location2):
     return Component.objects.create(
@@ -56,6 +62,8 @@ def test_component2(db, test_location2):
         weight=25,
         quantity=500,
     )
+
+
 @pytest.fixture
 def test_released_component(db):
     return ReleasedComponent.objects.create(
@@ -74,12 +82,9 @@ def test_location_for_models(db):
 
 @pytest.fixture
 def test_component_for_models(db, test_location_for_models):
-    return Component.objects.create(
-        code="code",
-        location=test_location_for_models,
-        weight=20,
-        quantity=1000
-    )
+    return Component.objects.create(code="code", location=test_location_for_models, weight=20, quantity=1000)
+
+
 @pytest.fixture
 def test_component2_for_models(db, test_location_for_models):
     return Component.objects.create(
@@ -88,5 +93,3 @@ def test_component2_for_models(db, test_location_for_models):
         weight=30,
         quantity=500,
     )
-
-

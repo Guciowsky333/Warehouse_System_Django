@@ -5,16 +5,21 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('inventory', '0002_releasedcomponent'),
-        ('list_LPT', '0005_rename_lpt_list_listlpt'),
+        ("inventory", "0002_releasedcomponent"),
+        ("list_LPT", "0005_rename_lpt_list_listlpt"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='component',
-            name='list',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='components', to='list_LPT.listlpt'),
+            model_name="component",
+            name="list",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="components",
+                to="list_LPT.listlpt",
+            ),
         ),
     ]

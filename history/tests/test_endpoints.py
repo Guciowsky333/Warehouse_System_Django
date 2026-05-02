@@ -1,4 +1,3 @@
-
 import pytest
 from rest_framework import status
 from rest_framework.test import APIClient
@@ -8,15 +7,15 @@ from history.models import ComponentHistory
 
 # Test for api/history/by_code/
 @pytest.mark.parametrize(
-    'query_params', [
+    "query_params",
+    [
         # We use the same data as the test component in the conftest.py file
-        ('?code=code'),
-        ('?unique_code=unique_code'),
-        ('?user_name=test user')
+        ("?code=code"),
+        ("?unique_code=unique_code"),
+        ("?user_name=test user"),
     ],
 )
-
-def test_history_without_action(query_params, test_user, test_location,test_location2, test_component):
+def test_history_without_action(query_params, test_user, test_location, test_location2, test_component):
     """
     We create 3 ComponentHistory with our component, first we change it location,
     then released it from warehouse to production, and finally we return it back to then warehouse and then check whether
@@ -24,63 +23,62 @@ def test_history_without_action(query_params, test_user, test_location,test_loca
     """
 
     change_location = ComponentHistory.objects.create(
-        action = 'change_location',
-        code = test_component.code,
-        unique_code = test_component.unique_code,
-        weight = test_component.weight,
-        quantity = test_component.quantity,
-        user = test_user,
-        full_name = test_user.full_name(),
-        previous_location = test_location2.name,
-        current_location = test_location.name
+        action="change_location",
+        code=test_component.code,
+        unique_code=test_component.unique_code,
+        weight=test_component.weight,
+        quantity=test_component.quantity,
+        user=test_user,
+        full_name=test_user.full_name(),
+        previous_location=test_location2.name,
+        current_location=test_location.name,
     )
 
     released_component = ComponentHistory.objects.create(
-        action='component_release',
+        action="component_release",
         code=test_component.code,
-        unique_code = test_component.unique_code,
+        unique_code=test_component.unique_code,
         weight=test_component.weight,
         quantity=test_component.quantity,
         user=test_user,
         full_name=test_user.full_name(),
         previous_location=test_location.name,
-        current_location='5500'
+        current_location="5500",
     )
 
     undo_component = ComponentHistory.objects.create(
-        action='component_undo',
+        action="component_undo",
         code=test_component.code,
-        unique_code = test_component.unique_code,
+        unique_code=test_component.unique_code,
         weight=test_component.weight,
         quantity=test_component.quantity,
         user=test_user,
         full_name=test_user.full_name(),
-        previous_location='5500',
+        previous_location="5500",
         current_location=test_location.name,
     )
 
     client = APIClient()
     client.force_authenticate(user=test_user)
 
-    response = client.get(f'/api/history/{query_params}&action=&page=1')
+    response = client.get(f"/api/history/{query_params}&action=&page=1")
 
     assert response.status_code == status.HTTP_200_OK
 
     # The order should be sorted by the mose recent date so it should look lik this :
     # 1.undo_component - 2.released_component - 3.change_location
-    first_element, second_element, third_element = response.data['results']
-    assert first_element['action'] == undo_component.action
-    assert second_element['action'] == released_component.action
-    assert third_element['action'] == change_location.action
-
+    first_element, second_element, third_element = response.data["results"]
+    assert first_element["action"] == undo_component.action
+    assert second_element["action"] == released_component.action
+    assert third_element["action"] == change_location.action
 
 
 @pytest.mark.parametrize(
-    'action', [
-        ('change_location'),
-        ('component_release'),
-        ('component_undo'),
-
+    "action",
+    [
+        ("change_location"),
+        ("component_release"),
+        ("component_undo"),
     ],
 )
 def test_history_with_action(action, test_user, test_location, test_location2, test_component):
@@ -90,7 +88,7 @@ def test_history_with_action(action, test_user, test_location, test_location2, t
     """
 
     change_location = ComponentHistory.objects.create(
-        action='change_location',
+        action="change_location",
         code=test_component.code,
         unique_code=test_component.unique_code,
         weight=test_component.weight,
@@ -98,11 +96,11 @@ def test_history_with_action(action, test_user, test_location, test_location2, t
         user=test_user,
         full_name=test_user.full_name(),
         previous_location=test_location2.name,
-        current_location=test_location.name
+        current_location=test_location.name,
     )
 
     released_component = ComponentHistory.objects.create(
-        action='component_release',
+        action="component_release",
         code=test_component.code,
         unique_code=test_component.unique_code,
         weight=test_component.weight,
@@ -110,59 +108,60 @@ def test_history_with_action(action, test_user, test_location, test_location2, t
         user=test_user,
         full_name=test_user.full_name(),
         previous_location=test_location.name,
-        current_location='5500'
+        current_location="5500",
     )
 
     undo_component = ComponentHistory.objects.create(
-        action='component_undo',
+        action="component_undo",
         code=test_component.code,
         unique_code=test_component.unique_code,
         weight=test_component.weight,
         quantity=test_component.quantity,
         user=test_user,
         full_name=test_user.full_name(),
-        previous_location='5500',
+        previous_location="5500",
         current_location=test_location.name,
     )
 
     client = APIClient()
     client.force_authenticate(user=test_user)
 
-    response = client.get(f'/api/history/?code={test_component.code}&action={action}&page=1')
+    response = client.get(f"/api/history/?code={test_component.code}&action={action}&page=1")
 
     assert response.status_code == status.HTTP_200_OK
 
-
     # In each case our history should storage only one model ComponentHistory with provided action
-    assert len(response.data['results']) == 1
+    assert len(response.data["results"]) == 1
 
-    result = response.data['results'][0]
-    if action == 'change_location':
-        assert result['action'] == change_location.action
+    result = response.data["results"][0]
+    if action == "change_location":
+        assert result["action"] == change_location.action
 
-    if action == 'component_release':
-        assert result['action'] == released_component.action
+    if action == "component_release":
+        assert result["action"] == released_component.action
 
-    if action == 'component_undo':
-        assert result['action'] == undo_component.action
+    if action == "component_undo":
+        assert result["action"] == undo_component.action
+
 
 @pytest.mark.parametrize(
-    'code, action, expected_status',[
+    "code, action, expected_status",
+    [
         # Empty code,
-        ('','change_location',status.HTTP_400_BAD_REQUEST),
+        ("", "change_location", status.HTTP_400_BAD_REQUEST),
         # Code that doesnt exist
-        ('123', 'change_location',status.HTTP_404_NOT_FOUND),
+        ("123", "change_location", status.HTTP_404_NOT_FOUND),
         # Wrong action
-        ('code', 'wrong_action',status.HTTP_400_BAD_REQUEST),
-
-    ]
+        ("code", "wrong_action", status.HTTP_400_BAD_REQUEST),
+    ],
 )
-def test_history_with_invalid_data(code, action,expected_status, test_user, test_location,test_location2, test_component):
+def test_history_with_invalid_data(
+    code, action, expected_status, test_user, test_location, test_location2, test_component
+):
     """In this test we check whole possible invalid data such as wrong action or wrong code amd more"""
 
-
     ComponentHistory.objects.create(
-        action='change_location',
+        action="change_location",
         code=test_component.code,
         unique_code=test_component.unique_code,
         weight=test_component.weight,
@@ -170,13 +169,14 @@ def test_history_with_invalid_data(code, action,expected_status, test_user, test
         user=test_user,
         full_name=test_user.full_name(),
         previous_location=test_location2.name,
-        current_location=test_location.name
+        current_location=test_location.name,
     )
 
     client = APIClient()
     client.force_authenticate(user=test_user)
-    response = client.get(f'/api/history/?code={code}&action={action}')
+    response = client.get(f"/api/history/?code={code}&action={action}")
     assert response.status_code == expected_status
+
 
 def test_history_with_two_filters(test_user, test_history_component_release, test_component):
     """
@@ -187,11 +187,8 @@ def test_history_with_two_filters(test_user, test_history_component_release, tes
     client = APIClient()
     client.force_authenticate(user=test_user)
 
-
-
     # We use two filters code and unique_code
-    response = client.get(f'/api/history/?code={test_component.code}&unique_code={test_component.unique_code}')
+    response = client.get(f"/api/history/?code={test_component.code}&unique_code={test_component.unique_code}")
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST
-    assert response.data['non_field_errors'][0] == 'Provide exactly one of: code, unique_code, user_name.'
-
+    assert response.data["non_field_errors"][0] == "Provide exactly one of: code, unique_code, user_name."

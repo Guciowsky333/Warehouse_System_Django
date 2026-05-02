@@ -5,10 +5,10 @@ from users.models import CustomUser
 
 # Create your models here.
 class ComponentHistory(models.Model):
-    ACTIONS ={
-        "change_location":"change_location",
-        "component_release":"component_release",
-        "component_undo":"component_undo",
+    ACTIONS = {
+        "change_location": "change_location",
+        "component_release": "component_release",
+        "component_undo": "component_undo",
     }
 
     action = models.CharField(choices=ACTIONS, max_length=17)
@@ -28,4 +28,3 @@ class ComponentHistory(models.Model):
 
     def __str__(self):
         return self.code
-

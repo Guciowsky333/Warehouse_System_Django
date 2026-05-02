@@ -5,20 +5,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('list_LPT', '0001_initial'),
+        ("list_LPT", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Order_component',
+            name="Order_component",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('code', models.CharField()),
-                ('quantity', models.IntegerField()),
-                ('everything_released', models.BooleanField(default=False)),
-                ('list', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='list_LPT.lpt_list')),
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("code", models.CharField()),
+                ("quantity", models.IntegerField()),
+                ("everything_released", models.BooleanField(default=False)),
+                ("list", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="list_LPT.lpt_list")),
             ],
         ),
     ]

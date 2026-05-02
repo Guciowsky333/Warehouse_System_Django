@@ -1,5 +1,3 @@
-
-
 import pytest
 from rest_framework import status
 from rest_framework.test import APIClient
@@ -20,53 +18,52 @@ def test_ShowAllListLPTAPIView(test_warehouseman, test_user_foreman):
     client.force_authenticate(user=test_warehouseman)
 
     list_1 = ListLPT.objects.create(
-        department = '5000',
-        user = test_user_foreman,
-    )
-
-
-    list_2 = ListLPT.objects.create(
-        department='5500',
+        department="5000",
         user=test_user_foreman,
     )
 
-    response = client.get('/api/list_LPT/show_all/?page=1')
+    list_2 = ListLPT.objects.create(
+        department="5500",
+        user=test_user_foreman,
+    )
+
+    response = client.get("/api/list_LPT/show_all/?page=1")
     assert response.status_code == status.HTTP_200_OK
 
-
-    data = response.data['results']
+    data = response.data["results"]
 
     # We know that first element will be list_2 because it is a younger list
     first_element = data[0]
-    assert first_element['list_number'] == list_2.list_number
-    assert first_element['department'] == list_2.department
-    assert first_element['user'] == list_2.user.full_name()
-    assert first_element['closed'] == list_2.closed
+    assert first_element["list_number"] == list_2.list_number
+    assert first_element["department"] == list_2.department
+    assert first_element["user"] == list_2.user.full_name()
+    assert first_element["closed"] == list_2.closed
 
     # And the second element will be list_1 because it is older one
     second_element = data[1]
-    assert second_element['list_number'] == list_1.list_number
-    assert second_element['department'] == list_1.department
-    assert second_element['user'] == list_1.user.full_name()
-    assert second_element['closed'] == list_1.closed
+    assert second_element["list_number"] == list_1.list_number
+    assert second_element["department"] == list_1.department
+    assert second_element["user"] == list_1.user.full_name()
+    assert second_element["closed"] == list_1.closed
+
 
 # Test for /api/list_LPT/validate_component/
 @pytest.mark.parametrize(
-    'code, quantity, expected_status',[
+    "code, quantity, expected_status",
+    [
         # Empty code
-        ('',2000, status.HTTP_400_BAD_REQUEST),
+        ("", 2000, status.HTTP_400_BAD_REQUEST),
         # Empty quantity
-        ('15016610','',status.HTTP_400_BAD_REQUEST),
+        ("15016610", "", status.HTTP_400_BAD_REQUEST),
         # Quantity that is not a number
-        ('15016610','sss',status.HTTP_400_BAD_REQUEST),
+        ("15016610", "sss", status.HTTP_400_BAD_REQUEST),
         # Code that doesn't exist
-        ('wrong_code',2000,status.HTTP_404_NOT_FOUND),
+        ("wrong_code", 2000, status.HTTP_404_NOT_FOUND),
         # User want to order too much quantity of our code we have only 3000 at stock
-        ('15016610',3001,status.HTTP_400_BAD_REQUEST),
+        ("15016610", 3001, status.HTTP_400_BAD_REQUEST),
         # Appropriate data
-        ('15016610',2000, status.HTTP_200_OK),
-
-    ]
+        ("15016610", 2000, status.HTTP_200_OK),
+    ],
 )
 def test_ValidateComponentView(code, quantity, expected_status, test_user_foreman, test_components_15016610):
     """In this test we take 'test_components_15016610' from fixture then we send request to our endpoint
@@ -75,49 +72,47 @@ def test_ValidateComponentView(code, quantity, expected_status, test_user_forema
     client = APIClient()
     client.force_authenticate(test_user_foreman)
 
-
     # total quantity at stock is 3000
 
     body = {
-        'code': code,
-        'quantity': quantity,
+        "code": code,
+        "quantity": quantity,
     }
 
-    response = client.post('/api/list_LPT/validate_component/', body, format='json')
+    response = client.post("/api/list_LPT/validate_component/", body, format="json")
     assert response.status_code == expected_status
+
 
 def test_ValidateComponentView_user_with_warehouseman_role(test_user_warehouseman):
     client = APIClient()
     client.force_authenticate(test_user_warehouseman)
-    response = client.get('/api/list_LPT/validate_component/')
+    response = client.get("/api/list_LPT/validate_component/")
     assert response.status_code == status.HTTP_403_FORBIDDEN
+
 
 def test_ValidateComponentView_requires_authentication():
     client = APIClient()
-    response = client.get('/api/list_LPT/validate_component/')
+    response = client.get("/api/list_LPT/validate_component/")
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
-
-
-
-
 # test for /api/list_LPT/create_list/
-def test_CreateListView(test_user_foreman, test_components_15016610, test_components_15016812, test_components_15016808):
+def test_CreateListView(
+    test_user_foreman, test_components_15016610, test_components_15016812, test_components_15016808
+):
     """Test creating a list with multiple components and verifying FIFO assignment"""
 
     client = APIClient()
     client.force_authenticate(test_user_foreman)
 
     body = {
-        'department':'5000',
-        'components':[
-            {'code':'15016610','quantity':2000},
-            {'code':'15016812','quantity':1000},
-            {'code':'15016808','quantity':2000},
-        ]
+        "department": "5000",
+        "components": [
+            {"code": "15016610", "quantity": 2000},
+            {"code": "15016812", "quantity": 1000},
+            {"code": "15016808", "quantity": 2000},
+        ],
     }
-
 
     # 3 boxes of 15016610, 1000 each → total 3000
     component_15016610_1, component_15016610_2, component_15016610_3 = test_components_15016610
@@ -129,8 +124,7 @@ def test_CreateListView(test_user_foreman, test_components_15016610, test_compon
     # 2 boxes of 15016808, 1000 each → total 2000
     component_15016808_1, component_15016808_2 = test_components_15016808
 
-    response = client.post('/api/list_LPT/create_list/', body, format='json')
-
+    response = client.post("/api/list_LPT/create_list/", body, format="json")
 
     # refreshing all components
     for component in test_components_15016610 + test_components_15016812 + test_components_15016808:
@@ -138,34 +132,32 @@ def test_CreateListView(test_user_foreman, test_components_15016610, test_compon
 
     assert response.status_code == status.HTTP_201_CREATED
 
-    assert response.data['message'] == 'List was created successfully'
+    assert response.data["message"] == "List was created successfully"
 
     # checking if our list was created successfully in the database
-    assert ListLPT.objects.filter(list_number=response.data['list_number']).exists()
+    assert ListLPT.objects.filter(list_number=response.data["list_number"]).exists()
 
     # checking whether components form our body was added to list correctly
-    created_list = ListLPT.objects.filter(list_number=response.data['list_number']).first()
+    created_list = ListLPT.objects.filter(list_number=response.data["list_number"]).first()
     order_components_in_list = created_list.order_components.all()
     assert len(order_components_in_list) == 3
 
     # The first one should be component with code 15016610 and 2000 quantity and 2 boxes
-    assert order_components_in_list[0].code == '15016610'
+    assert order_components_in_list[0].code == "15016610"
     assert order_components_in_list[0].quantity == 2000
     assert order_components_in_list[0].total_boxes == 2
 
     # The second one should be component with code 15016812 and 1000 quantity and 3 boxes
-    assert order_components_in_list[1].code == '15016812'
+    assert order_components_in_list[1].code == "15016812"
     assert order_components_in_list[1].quantity == 1000
     assert order_components_in_list[1].total_boxes == 3
 
     # The third one should be component with code 15016808 and 2000 quantity
-    assert order_components_in_list[2].code == '15016808'
+    assert order_components_in_list[2].code == "15016808"
     assert order_components_in_list[2].quantity == 2000
     assert order_components_in_list[2].total_boxes == 2
 
-
     # Checking whether boxes was added to list correctly according to FIFO method (First in First out)
-
 
     # We ordered 2000 quantity of code 15016610 so we expect that in our
     # list will be two boxes sorted by data of this code each one 1000 quantity
@@ -188,44 +180,49 @@ def test_CreateListView(test_user_foreman, test_components_15016610, test_compon
     assert component_15016808_2.list == created_list
 
 
-
 @pytest.mark.parametrize(
-    'body, expected_status',[
+    "body, expected_status",
+    [
         # Wrong department
-        ({
-            'department':'wrong_department',
-            'components':[
-                {'code':'15016610','quantity':2000},
-            ]
-        },status.HTTP_400_BAD_REQUEST),
+        (
+            {
+                "department": "wrong_department",
+                "components": [
+                    {"code": "15016610", "quantity": 2000},
+                ],
+            },
+            status.HTTP_400_BAD_REQUEST,
+        ),
         # User tried order the same code twice
-        ({
-             'department': '5000',
-             'components': [
-                 {'code': '15016610', 'quantity': 2000},
-                 {'code': '15016610', 'quantity': 1000},
-
-             ]
-         }, status.HTTP_400_BAD_REQUEST),
-]
+        (
+            {
+                "department": "5000",
+                "components": [
+                    {"code": "15016610", "quantity": 2000},
+                    {"code": "15016610", "quantity": 1000},
+                ],
+            },
+            status.HTTP_400_BAD_REQUEST,
+        ),
+    ],
 )
 def test_CreateListView_invalid_data(body, expected_status, test_user_foreman, test_components_15016610):
     client = APIClient()
     client.force_authenticate(test_user_foreman)
-    response = client.post('/api/list_LPT/create_list/', body, format='json')
+    response = client.post("/api/list_LPT/create_list/", body, format="json")
     assert response.status_code == expected_status
-
 
 
 def test_CreateListView_with_warehouseman_role(test_user_warehouseman):
     client = APIClient()
     client.force_authenticate(test_user_warehouseman)
-    response = client.get('/api/list_LPT/create_list/')
+    response = client.get("/api/list_LPT/create_list/")
     assert response.status_code == status.HTTP_403_FORBIDDEN
+
 
 def test_CreateListView_requires_authentication():
     client = APIClient()
-    response = client.get('/api/list_LPT/create_list/')
+    response = client.get("/api/list_LPT/create_list/")
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
@@ -236,28 +233,25 @@ def test_ReleaseComponentFromListView(test_warehouseman, test_list_lpt, test_loc
     second component, and we check whether our endpoint correctly changes status of OrderComponent and list and
     if it removed components from warehouse to department"""
 
-
-
     client = APIClient()
     client.force_authenticate(test_warehouseman)
 
-
     order_component_1 = OrderComponent.objects.create(
         list=test_list_lpt,
-        code = '15016610',
-        quantity = 2000,
+        code="15016610",
+        quantity=2000,
     )
 
     component_15016610_1 = Component.objects.create(
-        code = '15016610',
-        quantity = 1000,
-        weight = 10,
-        location = test_location,
-        list = test_list_lpt,
+        code="15016610",
+        quantity=1000,
+        weight=10,
+        location=test_location,
+        list=test_list_lpt,
     )
 
     component_15016610_2 = Component.objects.create(
-        code='15016610',
+        code="15016610",
         quantity=1000,
         weight=10,
         location=test_location,
@@ -265,12 +259,12 @@ def test_ReleaseComponentFromListView(test_warehouseman, test_list_lpt, test_loc
     )
 
     body1 = {
-        'list_number': test_list_lpt.list_number,
-        'unique_code': component_15016610_1.unique_code,
+        "list_number": test_list_lpt.list_number,
+        "unique_code": component_15016610_1.unique_code,
     }
 
     # First request
-    response = client.post('/api/list_LPT/release_component_from_list/', body1, format='json')
+    response = client.post("/api/list_LPT/release_component_from_list/", body1, format="json")
     test_list_lpt.refresh_from_db()
     order_component_1.refresh_from_db()
 
@@ -285,10 +279,10 @@ def test_ReleaseComponentFromListView(test_warehouseman, test_list_lpt, test_loc
 
     # Checking if this whole proces has been added correctly to history
     assert ComponentHistory.objects.filter(
-        action = 'component_release',
+        action="component_release",
         unique_code=component_15016610_1.unique_code,
-        previous_location = component_15016610_1.location.name,
-        current_location = test_list_lpt.department
+        previous_location=component_15016610_1.location.name,
+        current_location=test_list_lpt.department,
     ).exists()
 
     # We didn't release whole quantity from list so status list and OrderComponent should be still false
@@ -300,10 +294,10 @@ def test_ReleaseComponentFromListView(test_warehouseman, test_list_lpt, test_loc
 
     # The second request
     body2 = {
-        'list_number': test_list_lpt.list_number,
-        'unique_code': component_15016610_2.unique_code,
+        "list_number": test_list_lpt.list_number,
+        "unique_code": component_15016610_2.unique_code,
     }
-    response = client.post('/api/list_LPT/release_component_from_list/', body2, format='json')
+    response = client.post("/api/list_LPT/release_component_from_list/", body2, format="json")
     test_list_lpt.refresh_from_db()
     order_component_1.refresh_from_db()
 
@@ -316,80 +310,88 @@ def test_ReleaseComponentFromListView(test_warehouseman, test_list_lpt, test_loc
     assert order_component_1.already_released_quantity == component_15016610_1.quantity + component_15016610_2.quantity
     assert order_component_1.already_released_boxes == 2
 
+
 @pytest.mark.parametrize(
-    'list_number, unique_code, expected_message, expected_status',[
+    "list_number, unique_code, expected_message, expected_status",
+    [
         # User provided list that has been already closed
-        ('number_2', 'unique_code_1', 'This list has already been closed', status.HTTP_400_BAD_REQUEST ),
+        ("number_2", "unique_code_1", "This list has already been closed", status.HTTP_400_BAD_REQUEST),
         # User provided not exist list
-        ('wrong_list', 'unique_code_1', 'List number wrong_list not found', status.HTTP_404_NOT_FOUND ),
+        ("wrong_list", "unique_code_1", "List number wrong_list not found", status.HTTP_404_NOT_FOUND),
         # User provided not exist component
-        ('number_1', 'wrong_component', 'Component with unique_code wrong_component not found at stock', status.HTTP_404_NOT_FOUND ),
+        (
+            "number_1",
+            "wrong_component",
+            "Component with unique_code wrong_component not found at stock",
+            status.HTTP_404_NOT_FOUND,
+        ),
         # User provided component that is not at the list
-        ('number_1', 'unique_code_2', 'This component is not on this list', status.HTTP_400_BAD_REQUEST ),
-
-    ]
-
+        ("number_1", "unique_code_2", "This component is not on this list", status.HTTP_400_BAD_REQUEST),
+    ],
 )
-def test_ReleaseComponentFromListView_invalid_data(list_number, unique_code, expected_message, expected_status, test_warehouseman,
-                                                   test_list_lpt, test_list_lpt_closed, test_component_on_list, test_component_off_list):
+def test_ReleaseComponentFromListView_invalid_data(
+    list_number,
+    unique_code,
+    expected_message,
+    expected_status,
+    test_warehouseman,
+    test_list_lpt,
+    test_list_lpt_closed,
+    test_component_on_list,
+    test_component_off_list,
+):
 
     client = APIClient()
     client.force_authenticate(test_warehouseman)
 
     body = {
-        'list_number': list_number,
-        'unique_code': unique_code,
+        "list_number": list_number,
+        "unique_code": unique_code,
     }
-    response = client.post('/api/list_LPT/release_component_from_list/', body, format='json')
+    response = client.post("/api/list_LPT/release_component_from_list/", body, format="json")
     print(response.data)
 
     assert response.status_code == expected_status
-    assert response.data['message'] == expected_message
+    assert response.data["message"] == expected_message
 
 
 def test_ReleaseComponentFromListView_requires_authentication():
     client = APIClient()
-    response = client.post('/api/list_LPT/release_component_from_list/')
+    response = client.post("/api/list_LPT/release_component_from_list/")
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
-
-
-
-
 
 
 # Test for /api/list_LPT/list_detail/
 
+
 @pytest.mark.parametrize(
-    'list_number, expected_status',[
-
+    "list_number, expected_status",
+    [
         # Not exist list
-        ('wrong_number', status.HTTP_404_NOT_FOUND),
+        ("wrong_number", status.HTTP_404_NOT_FOUND),
         # Appropriate data
-        ('number_1', status.HTTP_200_OK),
-    ]
+        ("number_1", status.HTTP_200_OK),
+    ],
 )
-
-
 def test_ListLPTDetailView(list_number, expected_status, test_warehouseman, test_list_lpt):
     """In this test we assigned two OrderComponent models to our list and check whether endpoint
-    correctly show us details about our list """
+    correctly show us details about our list"""
 
     client = APIClient()
     client.force_authenticate(test_warehouseman)
 
     order_component_1 = OrderComponent.objects.create(
-        list = test_list_lpt,
-        code = '15016610',
-        quantity = 5000,
-        total_boxes = 5,
-        already_released_boxes = 3,
-        already_released_quantity = 3000,
-
+        list=test_list_lpt,
+        code="15016610",
+        quantity=5000,
+        total_boxes=5,
+        already_released_boxes=3,
+        already_released_quantity=3000,
     )
 
     order_component_2 = OrderComponent.objects.create(
         list=test_list_lpt,
-        code='15016808',
+        code="15016808",
         quantity=3000,
         total_boxes=3,
         already_released_boxes=3,
@@ -397,127 +399,121 @@ def test_ListLPTDetailView(list_number, expected_status, test_warehouseman, test
         everything_released=True,
     )
 
-
-    response = client.get(f'/api/list_LPT/list/{list_number}/details/')
+    response = client.get(f"/api/list_LPT/list/{list_number}/details/")
 
     assert response.status_code == expected_status
     if expected_status == status.HTTP_200_OK:
         data = response.json()
-        assert data['list_number'] == list_number
-        assert data['user'] == test_list_lpt.user.full_name()
-        assert data['department'] == test_list_lpt.department
-        assert data['closed'] == test_list_lpt.closed
-        assert data['total_boxes_in_list'] == order_component_1.total_boxes + order_component_2.total_boxes
-        assert data['total_boxes_in_list_released'] == order_component_1.already_released_boxes + order_component_2.already_released_boxes
+        assert data["list_number"] == list_number
+        assert data["user"] == test_list_lpt.user.full_name()
+        assert data["department"] == test_list_lpt.department
+        assert data["closed"] == test_list_lpt.closed
+        assert data["total_boxes_in_list"] == order_component_1.total_boxes + order_component_2.total_boxes
+        assert (
+            data["total_boxes_in_list_released"]
+            == order_component_1.already_released_boxes + order_component_2.already_released_boxes
+        )
 
         # We now that first element in 'order_components' filed in this list will be order_component_1 and the second will be
         # order_component_2 because they are sorted by quantity in serializer.py
-        assert data['order_components'][0]['code'] == order_component_1.code
-        assert data['order_components'][0]['quantity'] == order_component_1.quantity
-        assert data['order_components'][0]['already_released_quantity'] == order_component_1.already_released_quantity
-        assert data['order_components'][0]['total_boxes'] == order_component_1.total_boxes
-        assert data['order_components'][0]['already_released_boxes'] == order_component_1.already_released_boxes
-        assert data['order_components'][0]['everything_released'] == order_component_1.everything_released
+        assert data["order_components"][0]["code"] == order_component_1.code
+        assert data["order_components"][0]["quantity"] == order_component_1.quantity
+        assert data["order_components"][0]["already_released_quantity"] == order_component_1.already_released_quantity
+        assert data["order_components"][0]["total_boxes"] == order_component_1.total_boxes
+        assert data["order_components"][0]["already_released_boxes"] == order_component_1.already_released_boxes
+        assert data["order_components"][0]["everything_released"] == order_component_1.everything_released
 
-        assert data['order_components'][1]['code'] == order_component_2.code
-        assert data['order_components'][1]['quantity'] == order_component_2.quantity
-        assert data['order_components'][1]['already_released_quantity'] == order_component_2.already_released_quantity
-        assert data['order_components'][1]['total_boxes'] == order_component_2.total_boxes
-        assert data['order_components'][1]['already_released_boxes'] == order_component_2.already_released_boxes
-        assert data['order_components'][1]['everything_released'] == order_component_2.everything_released
+        assert data["order_components"][1]["code"] == order_component_2.code
+        assert data["order_components"][1]["quantity"] == order_component_2.quantity
+        assert data["order_components"][1]["already_released_quantity"] == order_component_2.already_released_quantity
+        assert data["order_components"][1]["total_boxes"] == order_component_2.total_boxes
+        assert data["order_components"][1]["already_released_boxes"] == order_component_2.already_released_boxes
+        assert data["order_components"][1]["everything_released"] == order_component_2.everything_released
 
 
 def test_ListLPTDetailView_requires_authentication(test_list_lpt):
     client = APIClient()
-    response = client.get(f'/api/list_LPT/list/{test_list_lpt.list_number}/details/')
+    response = client.get(f"/api/list_LPT/list/{test_list_lpt.list_number}/details/")
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
-
-
 
 
 # Test for /api/list_LPT/list_print/
 
-@pytest.mark.parametrize(
-    'list_number, expected_status',[
-        # List not exist
-        ('wrong_number', status.HTTP_404_NOT_FOUND),
-        # List is closed
-        ('number_2', status.HTTP_400_BAD_REQUEST),
-        # Appropriate data
-        ('number_1', status.HTTP_200_OK),
-    ]
-)
 
-def test_PrintListView(list_number, expected_status, test_warehouseman, test_list_lpt, test_list_lpt_closed,
-                       test_location_A10101, test_location_A10102, test_location_B12103):
+@pytest.mark.parametrize(
+    "list_number, expected_status",
+    [
+        # List not exist
+        ("wrong_number", status.HTTP_404_NOT_FOUND),
+        # List is closed
+        ("number_2", status.HTTP_400_BAD_REQUEST),
+        # Appropriate data
+        ("number_1", status.HTTP_200_OK),
+    ],
+)
+def test_PrintListView(
+    list_number,
+    expected_status,
+    test_warehouseman,
+    test_list_lpt,
+    test_list_lpt_closed,
+    test_location_A10101,
+    test_location_A10102,
+    test_location_B12103,
+):
     """
     In this test we assigned 3 components to our list each one with different location, and we
     check whether our endpoint correctly return to use all of them sorted by location name
     """
 
     component_1 = Component.objects.create(
-        code = '15016610',
-        quantity = 1000,
-        weight = 20,
-        location = test_location_B12103,
-        list = test_list_lpt
+        code="15016610", quantity=1000, weight=20, location=test_location_B12103, list=test_list_lpt
     )
 
     component_2 = Component.objects.create(
-        code='15016808',
-        quantity=1000,
-        weight=10,
-        location=test_location_A10101,
-        list=test_list_lpt
+        code="15016808", quantity=1000, weight=10, location=test_location_A10101, list=test_list_lpt
     )
 
     component_3 = Component.objects.create(
-        code='15016812',
-        quantity=500,
-        weight=10,
-        location=test_location_A10102,
-        list=test_list_lpt
+        code="15016812", quantity=500, weight=10, location=test_location_A10102, list=test_list_lpt
     )
 
     client = APIClient()
     client.force_authenticate(test_warehouseman)
 
-    response = client.get(f'/api/list_LPT/list/{list_number}/print/')
-
+    response = client.get(f"/api/list_LPT/list/{list_number}/print/")
 
     assert response.status_code == expected_status
 
     if expected_status == status.HTTP_200_OK:
         data = response.json()
-        assert data['date'] == test_list_lpt.date.strftime('%d.%m.%Y %H:%M')
-        assert data['list_number'] == test_list_lpt.list_number
-        assert data['department'] == test_list_lpt.department
-
+        assert data["date"] == test_list_lpt.date.strftime("%d.%m.%Y %H:%M")
+        assert data["list_number"] == test_list_lpt.list_number
+        assert data["department"] == test_list_lpt.department
 
         # Components should be sorted by location name so we know that first should be
         # component_2 because it has A10101 location.The second will be component_3 with
         # A10102 location and the last one should be component_1 with B12103 location name
-        first_component_in_list = data['components'][0]
-        assert first_component_in_list['code'] == component_2.code
-        assert first_component_in_list['quantity'] == component_2.quantity
-        assert first_component_in_list['unique_code'] == component_2.unique_code
-        assert first_component_in_list['location_name'] == component_2.location.name
+        first_component_in_list = data["components"][0]
+        assert first_component_in_list["code"] == component_2.code
+        assert first_component_in_list["quantity"] == component_2.quantity
+        assert first_component_in_list["unique_code"] == component_2.unique_code
+        assert first_component_in_list["location_name"] == component_2.location.name
 
-        second_component_in_list = data['components'][1]
-        assert second_component_in_list['code'] == component_3.code
-        assert second_component_in_list['quantity'] == component_3.quantity
-        assert second_component_in_list['unique_code'] == component_3.unique_code
-        assert second_component_in_list['location_name'] == component_3.location.name
+        second_component_in_list = data["components"][1]
+        assert second_component_in_list["code"] == component_3.code
+        assert second_component_in_list["quantity"] == component_3.quantity
+        assert second_component_in_list["unique_code"] == component_3.unique_code
+        assert second_component_in_list["location_name"] == component_3.location.name
 
-        third_component_in_list = data['components'][2]
-        assert third_component_in_list['code'] == component_1.code
-        assert third_component_in_list['quantity'] == component_1.quantity
-        assert third_component_in_list['unique_code'] == component_1.unique_code
-        assert third_component_in_list['location_name'] == component_1.location.name
+        third_component_in_list = data["components"][2]
+        assert third_component_in_list["code"] == component_1.code
+        assert third_component_in_list["quantity"] == component_1.quantity
+        assert third_component_in_list["unique_code"] == component_1.unique_code
+        assert third_component_in_list["location_name"] == component_1.location.name
 
 
 def test_PrintListView_requires_authentication(test_list_lpt):
     client = APIClient()
-    response = client.get(f'/api/list_LPT/list/{test_list_lpt.list_number}/print/')
+    response = client.get(f"/api/list_LPT/list/{test_list_lpt.list_number}/print/")
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
-

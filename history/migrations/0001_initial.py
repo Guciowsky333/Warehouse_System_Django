@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
@@ -15,19 +14,34 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='ComponentHistory',
+            name="ComponentHistory",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('action', models.CharField(choices=[('change_location', 'change_location'), ('component_release', 'component_release'), ('component_undo', 'component_undo')], max_length=17)),
-                ('code', models.CharField(max_length=10)),
-                ('unique_code', models.CharField(max_length=15)),
-                ('quantity', models.IntegerField()),
-                ('weight', models.FloatField()),
-                ('full_name', models.CharField(max_length=100)),
-                ('date', models.DateTimeField(auto_now_add=True)),
-                ('previous_location', models.CharField(max_length=100)),
-                ('current_location', models.CharField(max_length=100)),
-                ('user', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                (
+                    "action",
+                    models.CharField(
+                        choices=[
+                            ("change_location", "change_location"),
+                            ("component_release", "component_release"),
+                            ("component_undo", "component_undo"),
+                        ],
+                        max_length=17,
+                    ),
+                ),
+                ("code", models.CharField(max_length=10)),
+                ("unique_code", models.CharField(max_length=15)),
+                ("quantity", models.IntegerField()),
+                ("weight", models.FloatField()),
+                ("full_name", models.CharField(max_length=100)),
+                ("date", models.DateTimeField(auto_now_add=True)),
+                ("previous_location", models.CharField(max_length=100)),
+                ("current_location", models.CharField(max_length=100)),
+                (
+                    "user",
+                    models.ForeignKey(
+                        null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL
+                    ),
+                ),
             ],
         ),
     ]

@@ -6,19 +6,20 @@ import list_LPT.utils
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='LPT_list',
+            name="LPT_list",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('list_number', models.IntegerField(default=list_LPT.utils.generate_number_of_list, max_length=10, unique=True)),
-                ('closed', models.BooleanField(default=False)),
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                (
+                    "list_number",
+                    models.IntegerField(default=list_LPT.utils.generate_number_of_list, max_length=10, unique=True),
+                ),
+                ("closed", models.BooleanField(default=False)),
             ],
         ),
     ]

@@ -4,20 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('history', '0001_initial'),
+        ("history", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='componenthistory',
-            name='code',
+            model_name="componenthistory",
+            name="code",
             field=models.CharField(db_index=True, max_length=10),
         ),
         migrations.AlterField(
-            model_name='componenthistory',
-            name='unique_code',
+            model_name="componenthistory",
+            name="unique_code",
             field=models.CharField(db_index=True, max_length=15),
         ),
     ]

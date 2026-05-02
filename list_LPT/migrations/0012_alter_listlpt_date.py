@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('list_LPT', '0011_ordercomponent_already_released_boxes'),
+        ("list_LPT", "0011_ordercomponent_already_released_boxes"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='listlpt',
-            name='date',
+            model_name="listlpt",
+            name="date",
             field=models.DateTimeField(auto_now_add=True),
         ),
     ]

@@ -27,11 +27,12 @@ from users.permissions import IsManager
 
 # Create your views here.
 
+
 class ChangeLocationView(APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
-        summary='Change Location component',
+        summary="Change Location component",
         description="""
         Changes the warehouse location of a component by its unique code.
     
@@ -46,18 +47,19 @@ class ChangeLocationView(APIView):
         """,
         request=ChangeLocationSerializer,
         responses={
-            200: OpenApiResponse(description='Changed location successfully'),
-            400: OpenApiResponse(description='Validation error / location overweight / component already released / EXTC location'),
-            404: OpenApiResponse(description='Component or Location not found'),
-            401: OpenApiResponse(description='Unauthorized'),
-        }
+            200: OpenApiResponse(description="Changed location successfully"),
+            400: OpenApiResponse(
+                description="Validation error / location overweight / component already released / EXTC location"
+            ),
+            404: OpenApiResponse(description="Component or Location not found"),
+            401: OpenApiResponse(description="Unauthorized"),
+        },
     )
-
     def patch(self, request):
         serializer = ChangeLocationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        unique_code = serializer.validated_data['unique_code']
-        location_name = serializer.validated_data['location_name']
+        unique_code = serializer.validated_data["unique_code"]
+        location_name = serializer.validated_data["location_name"]
         user = request.user
 
         try:
@@ -66,22 +68,18 @@ class ChangeLocationView(APIView):
 
         # if user provided inappropriate data
         except ValueError as e:
-            return Response({
-                "message":str(e)
-            }, status=400)
+            return Response({"message": str(e)}, status=400)
 
         # if user provided data that not exist in database
         except NotFound as e:
-            return Response({
-                "message": str(e)
-            }, status=404)
+            return Response({"message": str(e)}, status=404)
 
 
 class ReleasedComponentView(APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
-        summary='Release component',
+        summary="Release component",
         description="""
         Release component by its unique code from the warehouse to 
         specified department on production.
@@ -95,42 +93,35 @@ class ReleasedComponentView(APIView):
         """,
         request=ReleasedComponentSerializer,
         responses={
-            201 : OpenApiResponse(description='Release component successfully'),
-            400 : OpenApiResponse(description='Validation error / wrong department / component already released'),
-            404: OpenApiResponse(description='Component not found'),
-            401: OpenApiResponse(description='Unauthorized'),
-        }
+            201: OpenApiResponse(description="Release component successfully"),
+            400: OpenApiResponse(description="Validation error / wrong department / component already released"),
+            404: OpenApiResponse(description="Component not found"),
+            401: OpenApiResponse(description="Unauthorized"),
+        },
     )
-
     def post(self, request):
         serializer = ReleasedComponentSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        unique_code = serializer.validated_data['unique_code']
-        department = serializer.validated_data['department']
+        unique_code = serializer.validated_data["unique_code"]
+        department = serializer.validated_data["department"]
         user = request.user
 
         try:
             result = release_component(unique_code, department, user)
             return Response(result, status=201)
 
-
         except ValueError as e:
-            return Response({
-                "message":str(e)
-            },status=400)
-
+            return Response({"message": str(e)}, status=400)
 
         except NotFound as e:
-            return Response({
-                "message": str(e)
-            }, status=404)
+            return Response({"message": str(e)}, status=404)
 
 
 class CheckLocationView(APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
-        summary='Check location',
+        summary="Check location",
         description="""
         Returns all components in specified location grouped by code
         order by total quantity
@@ -140,42 +131,28 @@ class CheckLocationView(APIView):
         - Location must exist in the warehouse
         - Authentication required
         """,
-        parameters=[
-            OpenApiParameter(name='location_name',type=str, required=True)
-        ],
+        parameters=[OpenApiParameter(name="location_name", type=str, required=True)],
         responses={
-            200 : OpenApiResponse(description='List of all components on specified location'),
-            400 : OpenApiResponse(description='Location is required'),
-            404: OpenApiResponse(description='Location not found'),
-            401: OpenApiResponse(description='Unauthorized'),
-        }
-
+            200: OpenApiResponse(description="List of all components on specified location"),
+            400: OpenApiResponse(description="Location is required"),
+            404: OpenApiResponse(description="Location not found"),
+            401: OpenApiResponse(description="Unauthorized"),
+        },
     )
-
     def get(self, request):
-        location_name = request.query_params.get('location_name')
+        location_name = request.query_params.get("location_name")
 
         try:
             components = check_location(location_name)
-            return Response({
-                "message":f"All components on location {location_name}",
-                "components":components
-            },status=200)
-
-
+            return Response(
+                {"message": f"All components on location {location_name}", "components": components}, status=200
+            )
 
         except ValueError as e:
-            return Response({
-                "message":str(e)
-            },status=400)
-
+            return Response({"message": str(e)}, status=400)
 
         except NotFound as e:
-            return Response({
-                "message": str(e)
-            },status=404)
-
-
+            return Response({"message": str(e)}, status=404)
 
 
 class CheckComponentView(APIView):
@@ -183,7 +160,7 @@ class CheckComponentView(APIView):
     serializer_class = ComponentSerializer
 
     @extend_schema(
-        summary='Check stock of component',
+        summary="Check stock of component",
         description="""
         Returns all single object of component and its location with specified code sorted by FIFO
         (First in First out)
@@ -194,19 +171,18 @@ class CheckComponentView(APIView):
         - Authentication required
         """,
         parameters=[
-            OpenApiParameter(name='code',type=str, required=True),
-            OpenApiParameter(name='page', type=int, required=False, description='Page number'),
+            OpenApiParameter(name="code", type=str, required=True),
+            OpenApiParameter(name="page", type=int, required=False, description="Page number"),
         ],
         responses={
-            200 : OpenApiResponse(description='List of all components with specified code sorted by FIFO'),
-            400 : OpenApiResponse(description='Code is required'),
-            404: OpenApiResponse(description='Code not found'),
-            401: OpenApiResponse(description='Unauthorized'),
-        }
+            200: OpenApiResponse(description="List of all components with specified code sorted by FIFO"),
+            400: OpenApiResponse(description="Code is required"),
+            404: OpenApiResponse(description="Code not found"),
+            401: OpenApiResponse(description="Unauthorized"),
+        },
     )
-
     def get(self, request):
-        code = request.query_params.get('code')
+        code = request.query_params.get("code")
 
         try:
             # We use pagination here because in the stock we can have a lot of components
@@ -223,22 +199,17 @@ class CheckComponentView(APIView):
             return paginator.get_paginated_response(serializer.data)
 
         except ValueError as e:
-            return Response({
-                "message":str(e)
-
-            },status=400)
+            return Response({"message": str(e)}, status=400)
 
         except NotFound as e:
-            return Response({
-                "message": str(e)
-            },status=404)
+            return Response({"message": str(e)}, status=404)
 
 
 class CheckComponentGroupedView(APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
-        summary='Check stock of component',
+        summary="Check stock of component",
         description="""
         Returns all locations of components with specified code grouped by location sorted by
         total_quantity descending on this location 
@@ -248,44 +219,37 @@ class CheckComponentGroupedView(APIView):
         - Specified code must exist in warehouse
         - Authentication required
         """,
-        parameters=[
-            OpenApiParameter(name='code',type=str, required=True)
-        ],
+        parameters=[OpenApiParameter(name="code", type=str, required=True)],
         responses={
-            200: OpenApiResponse(description='List of all components with specified code grouped by location sorted by total quantity'),
-            400 : OpenApiResponse(description='Code is required'),
-            404: OpenApiResponse(description='Code not found'),
-            401: OpenApiResponse(description='Unauthorized'),
-        }
+            200: OpenApiResponse(
+                description="List of all components with specified code grouped by location sorted by total quantity"
+            ),
+            400: OpenApiResponse(description="Code is required"),
+            404: OpenApiResponse(description="Code not found"),
+            401: OpenApiResponse(description="Unauthorized"),
+        },
     )
-
     def get(self, request):
-        code = request.query_params.get('code')
+        code = request.query_params.get("code")
 
         try:
             components = check_component_grouped(code)
-            return Response({
-                "message": f'All locations for component {code}',
-                "components": list(components)
-            }, status=200)
-
+            return Response(
+                {"message": f"All locations for component {code}", "components": list(components)}, status=200
+            )
 
         except ValueError as e:
-            return Response({
-                "message":str(e)
-            },status=400)
+            return Response({"message": str(e)}, status=400)
 
         except NotFound as e:
-            return Response({
-                "message": str(e)
-            },status=404)
+            return Response({"message": str(e)}, status=404)
 
 
 class ShowQuantityInDepartmentView(APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
-        summary='Show quantity of component in department',
+        summary="Show quantity of component in department",
         description="""
         Returns total quantity and total boxes of component with specified code on specified department
         
@@ -296,45 +260,44 @@ class ShowQuantityInDepartmentView(APIView):
         - Authentication required
         """,
         parameters=[
-            OpenApiParameter(name='code',type=str, required=True),
-            OpenApiParameter(name='department',type=str, required=True)
+            OpenApiParameter(name="code", type=str, required=True),
+            OpenApiParameter(name="department", type=str, required=True),
         ],
         responses={
-            200: OpenApiResponse(description='Total quantity of component in department'),
-            400 : OpenApiResponse(description='Code and department are required / wrong department'),
-            404: OpenApiResponse(description='Code not found'),
-            401: OpenApiResponse(description='Unauthorized'),
-        }
+            200: OpenApiResponse(description="Total quantity of component in department"),
+            400: OpenApiResponse(description="Code and department are required / wrong department"),
+            404: OpenApiResponse(description="Code not found"),
+            401: OpenApiResponse(description="Unauthorized"),
+        },
     )
-
     def get(self, request):
-        code = request.query_params.get('code')
-        department = request.query_params.get('department')
+        code = request.query_params.get("code")
+        department = request.query_params.get("department")
 
         try:
             total_boxes, total_quantity = component_quantity_at_department(code, department)
-            return Response({
-                'code':f'{code}',
-                'department':f'{department}',
-                'total_quantity': total_quantity,
-                'total_boxes': total_boxes,
-            }, status=200)
+            return Response(
+                {
+                    "code": f"{code}",
+                    "department": f"{department}",
+                    "total_quantity": total_quantity,
+                    "total_boxes": total_boxes,
+                },
+                status=200,
+            )
 
         except ValueError as e:
-            return Response({
-                "message":str(e)
-            }, status=400)
+            return Response({"message": str(e)}, status=400)
 
         except NotFound as e:
-            return Response({
-                "message": str(e)
-            }, status=404)
+            return Response({"message": str(e)}, status=404)
+
 
 class ShowQuantityInStockView(APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
-        summary='Show quantity of component in stock',
+        summary="Show quantity of component in stock",
         description="""
         Returns total quantity and total boxes of component with specified code in stock
         
@@ -344,43 +307,41 @@ class ShowQuantityInStockView(APIView):
         - Authentication required
         """,
         parameters=[
-            OpenApiParameter(name='code',type=str, required=True),
+            OpenApiParameter(name="code", type=str, required=True),
         ],
-        responses = {
-            200: OpenApiResponse(description='Total quantity of component in stock'),
-            400 : OpenApiResponse(description='Code is required'),
-            404: OpenApiResponse(description='Code not found'),
-            401: OpenApiResponse(description='Unauthorized'),
-        }
+        responses={
+            200: OpenApiResponse(description="Total quantity of component in stock"),
+            400: OpenApiResponse(description="Code is required"),
+            404: OpenApiResponse(description="Code not found"),
+            401: OpenApiResponse(description="Unauthorized"),
+        },
     )
-
     def get(self, request):
-        code = request.query_params.get('code')
+        code = request.query_params.get("code")
 
         try:
             total_boxes, total_quantity = component_quantity_at_stock(code)
-            return Response({
-                'code':f'{code}',
-                'total_boxes': total_boxes,
-                'total_quantity': total_quantity,
-            }, status=200)
+            return Response(
+                {
+                    "code": f"{code}",
+                    "total_boxes": total_boxes,
+                    "total_quantity": total_quantity,
+                },
+                status=200,
+            )
 
         except ValueError as e:
-            return Response({
-                "message":str(e)
-            }, status=400)
+            return Response({"message": str(e)}, status=400)
 
         except NotFound as e:
-            return Response({
-                "message": str(e)
-            }, status=404)
+            return Response({"message": str(e)}, status=404)
 
 
 class UndoComponentView(APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
-        summary='Undo component',
+        summary="Undo component",
         description="""
         Returns a component with a specified unique code from the department back to the warehouse
         at the provided location
@@ -395,23 +356,19 @@ class UndoComponentView(APIView):
         """,
         request=UndoComponentSerializer,
         responses={
-            201 : OpenApiResponse(description='Successfully undo component'),
-            400 : OpenApiResponse(description='Validation error / location overweight / EXTC location '),
-            404: OpenApiResponse(description='Code or location not found'),
-            401: OpenApiResponse(description='Unauthorized'),
-
-        }
-
+            201: OpenApiResponse(description="Successfully undo component"),
+            400: OpenApiResponse(description="Validation error / location overweight / EXTC location "),
+            404: OpenApiResponse(description="Code or location not found"),
+            401: OpenApiResponse(description="Unauthorized"),
+        },
     )
-
     def post(self, request):
 
         serializer = UndoComponentSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-
-        unique_code = serializer.validated_data['unique_code']
-        location_name = serializer.validated_data['location_name']
+        unique_code = serializer.validated_data["unique_code"]
+        location_name = serializer.validated_data["location_name"]
         user = request.user
 
         try:
@@ -419,23 +376,18 @@ class UndoComponentView(APIView):
             return Response(result, status=201)
 
         except ValueError as e:
-            return Response({
-                "message":str(e)
-            },status=400)
+            return Response({"message": str(e)}, status=400)
 
         except NotFound as e:
-            return Response({
-                "message": str(e)
-            },status=404)
+            return Response({"message": str(e)}, status=404)
 
 
 class ReceivingComponentView(APIView):
-
     # only users with the manager role can receive components in the warehous
     permission_classes = [IsAuthenticated, IsManager]
 
     @extend_schema(
-        summary='Receiving component',
+        summary="Receiving component",
         description="""
         Create a component model with specified data with EXTC location, only managers are able 
         to accepting components from outside to the warehouse.
@@ -447,26 +399,23 @@ class ReceivingComponentView(APIView):
         """,
         request=ReceivingComponentSerializer,
         responses={
-            201: OpenApiResponse(description='Successfully created component'),
-            400: OpenApiResponse(description='Validation error'),
-            401: OpenApiResponse(description='Unauthorized'),
-            403: OpenApiResponse(description='Permission denied'),
-        }
+            201: OpenApiResponse(description="Successfully created component"),
+            400: OpenApiResponse(description="Validation error"),
+            401: OpenApiResponse(description="Unauthorized"),
+            403: OpenApiResponse(description="Permission denied"),
+        },
     )
     def post(self, request):
         serializer = ReceivingComponentSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        code = serializer.validated_data['code']
-        weight = serializer.validated_data['weight']
-        quantity = serializer.validated_data['quantity']
-
+        code = serializer.validated_data["code"]
+        weight = serializer.validated_data["weight"]
+        quantity = serializer.validated_data["quantity"]
 
         try:
             result = receiving_the_component_into_the_warehouse(code, weight, quantity)
-            return Response(result,status=201)
+            return Response(result, status=201)
 
         except ValueError as e:
-            return Response({
-                'message':str(e)
-            },status=400)
+            return Response({"message": str(e)}, status=400)

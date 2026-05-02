@@ -10,8 +10,8 @@ from users.services import create_custom_user, reset_password
 
 # Create your views here.
 
-class CreateCustomUserView(APIView):
 
+class CreateCustomUserView(APIView):
     permission_classes = [IsAuthenticated, IsManager]
 
     @extend_schema(
@@ -34,34 +34,25 @@ class CreateCustomUserView(APIView):
         request=CustomUserSerializer,
         responses={
             201: OpenApiResponse(description="User created successfully."),
-            400 : OpenApiResponse(description="Validation error."),
+            400: OpenApiResponse(description="Validation error."),
             401: OpenApiResponse(description="Unauthorized"),
             403: OpenApiResponse(description="Permission denied"),
-        }
+        },
     )
-
-
-
     def post(self, request):
         serializer = CustomUserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        first_name = serializer.validated_data['first_name']
-        last_name = serializer.validated_data['last_name']
-        role = serializer.validated_data['role']
+        first_name = serializer.validated_data["first_name"]
+        last_name = serializer.validated_data["last_name"]
+        role = serializer.validated_data["role"]
 
         result = create_custom_user(first_name, last_name, role)
 
-        return Response({
-            "message":"User created successfully",
-            **result
-        }, status=201)
-
-
+        return Response({"message": "User created successfully", **result}, status=201)
 
 
 class ResetPasswordView(APIView):
-
     permission_classes = [IsAuthenticated, IsManager]
 
     @extend_schema(
@@ -86,30 +77,22 @@ class ResetPasswordView(APIView):
             404: OpenApiResponse(description="User not found."),
             401: OpenApiResponse(description="Unauthorized"),
             403: OpenApiResponse(description="Permission denied"),
-        }
+        },
     )
-
     def patch(self, request):
         serializer = ResetPasswordSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        username = serializer.data['username']
-
+        username = serializer.data["username"]
 
         try:
             result = reset_password(username=username)
-            return Response({
-                "message":"Password reset successfully",
-                **result
-            },status=200)
-
+            return Response({"message": "Password reset successfully", **result}, status=200)
 
         except NotFound as e:
-            return Response({
-                "message":str(e),
-            },status=404)
-
-
-
-
-
+            return Response(
+                {
+                    "message": str(e),
+                },
+                status=404,
+            )

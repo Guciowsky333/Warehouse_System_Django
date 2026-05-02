@@ -8,14 +8,11 @@ from .models import CustomUser
 
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
-    list_display = ('full_name','role')
+    list_display = ("full_name", "role")
 
-    fieldsets = UserAdmin.fieldsets + (
-        ("Role", {"fields": ("role",)}),
-    )
+    fieldsets = UserAdmin.fieldsets + (("Role", {"fields": ("role",)}),)
     add_fieldsets = UserAdmin.add_fieldsets + (
         ("Role", {"fields": ("role",)}),
         ("first_name", {"fields": ("first_name",)}),
         ("last_name", {"fields": ("last_name",)}),
     )
-

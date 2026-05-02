@@ -2,18 +2,21 @@ import secrets
 import string
 
 
-def generate_username(first_name:str, last_name:str) -> str:
+def generate_username(first_name: str, last_name: str) -> str:
     """Generates username in format:
-     first letter of first name + last name + 2 random digits"""
+    first letter of first name + last name + 2 random digits"""
 
-    random_numbers = ''.join(secrets.choice(string.digits) for _ in range(2))
-    return f'{first_name[0]}.{last_name}{random_numbers}'
+    random_numbers = "".join(secrets.choice(string.digits) for _ in range(2))
+    return f"{first_name[0]}.{last_name}{random_numbers}"
 
-def generate_password() ->str:
+
+def generate_password() -> str:
     """Generates a random password with 8 lowers characters and 2 numbers on the end"""
 
     characters = string.ascii_letters.lower()
     numbers = string.digits
 
-    password = ''.join(secrets.choice(characters) for _ in range(8)) + ''.join(secrets.choice(numbers) for _ in range(2))
+    password = "".join(secrets.choice(characters) for _ in range(8)) + "".join(
+        secrets.choice(numbers) for _ in range(2)
+    )
     return password

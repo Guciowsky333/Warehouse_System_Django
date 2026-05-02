@@ -14,6 +14,7 @@ def test_user(db):
         role="test_role1",
     )
 
+
 @pytest.fixture
 def test_manager(db):
     return CustomUser.objects.create_user(
@@ -23,6 +24,7 @@ def test_manager(db):
         last_name="test_last_name2",
         role="manager",
     )
+
 
 @pytest.fixture
 def test_warehouseman(db):

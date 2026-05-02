@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('list_LPT', '0008_ordercomponent_already_released'),
+        ("list_LPT", "0008_ordercomponent_already_released"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='ordercomponent',
-            name='total_boxes',
+            model_name="ordercomponent",
+            name="total_boxes",
             field=models.IntegerField(default=0),
         ),
     ]

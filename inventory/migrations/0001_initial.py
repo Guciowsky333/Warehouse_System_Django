@@ -7,30 +7,36 @@ import inventory.services
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Location',
+            name="Location",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=6)),
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("name", models.CharField(max_length=6)),
             ],
         ),
         migrations.CreateModel(
-            name='Component',
+            name="Component",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('code', models.CharField(max_length=10)),
-                ('unique_code', models.CharField(default=inventory.utils.generate_unique_code, max_length=15, unique=True)),
-                ('weight', models.FloatField()),
-                ('quantity', models.IntegerField()),
-                ('production_date', models.DateField(auto_now_add=True)),
-                ('location', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='components', to='inventory.location')),
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("code", models.CharField(max_length=10)),
+                (
+                    "unique_code",
+                    models.CharField(default=inventory.utils.generate_unique_code, max_length=15, unique=True),
+                ),
+                ("weight", models.FloatField()),
+                ("quantity", models.IntegerField()),
+                ("production_date", models.DateField(auto_now_add=True)),
+                (
+                    "location",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, related_name="components", to="inventory.location"
+                    ),
+                ),
             ],
         ),
     ]

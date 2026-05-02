@@ -11,16 +11,18 @@ def generate_unique_code() -> str:
 
     from inventory.models import Component, ReleasedComponent
 
-
     while True:
-        unique_code = ''.join(secrets.choice(string.digits) for _ in range(15))
+        unique_code = "".join(secrets.choice(string.digits) for _ in range(15))
 
         # checking if component model or ReleasedComponent model with the same unique code already exist
-        if not Component.objects.filter(unique_code=unique_code).exists() and not ReleasedComponent.objects.filter(unique_code=unique_code).exists():
+        if (
+            not Component.objects.filter(unique_code=unique_code).exists()
+            and not ReleasedComponent.objects.filter(unique_code=unique_code).exists()
+        ):
             return unique_code
 
 
-def validate_unique_code(unique_code:str):
+def validate_unique_code(unique_code: str):
     """This function validates a unique code
     checking whether provided unique code has been released from warehouse,
     and now it is at the production (if yes return a message with special status "4"
@@ -35,6 +37,6 @@ def validate_unique_code(unique_code:str):
     try:
         component = Component.objects.select_for_update().get(unique_code=unique_code)
     except ObjectDoesNotExist:
-        raise NotFound(f'Component with unique code {unique_code} not found')
+        raise NotFound(f"Component with unique code {unique_code} not found")
 
     return component

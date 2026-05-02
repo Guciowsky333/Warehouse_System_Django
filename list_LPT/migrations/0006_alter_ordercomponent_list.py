@@ -5,15 +5,16 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('list_LPT', '0005_rename_lpt_list_listlpt'),
+        ("list_LPT", "0005_rename_lpt_list_listlpt"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='ordercomponent',
-            name='list',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='order_components', to='list_LPT.listlpt'),
+            model_name="ordercomponent",
+            name="list",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, related_name="order_components", to="list_LPT.listlpt"
+            ),
         ),
     ]

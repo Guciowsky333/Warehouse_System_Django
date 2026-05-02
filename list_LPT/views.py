@@ -26,7 +26,6 @@ from list_LPT.services import (
 
 # Create your views here.
 class ShowAllListLPTAPIView(APIView):
-
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
@@ -38,14 +37,13 @@ class ShowAllListLPTAPIView(APIView):
         - Authentication required
         """,
         parameters=[
-            OpenApiParameter(name='page',required=False, description='Page number'),
+            OpenApiParameter(name="page", required=False, description="Page number"),
         ],
         responses={
-            200: OpenApiResponse(description='All lists sorted by date'),
-            401: OpenApiResponse(description='Unauthorized')
-        }
+            200: OpenApiResponse(description="All lists sorted by date"),
+            401: OpenApiResponse(description="Unauthorized"),
+        },
     )
-
     def get(self, request):
         queryset = show_all_list()
 
@@ -60,15 +58,11 @@ class ShowAllListLPTAPIView(APIView):
         return paginator.get_paginated_response(serializer.data)
 
 
-
-
-
-
 class ValidateComponentView(APIView):
     permission_classes = [IsAuthenticated, IsForemanOrHigher]
 
     @extend_schema(
-        summary='Validate single component',
+        summary="Validate single component",
         description="""
         Validates a single component before adding it to the order list.
 
@@ -86,48 +80,37 @@ class ValidateComponentView(APIView):
         """,
         request=OrderComponentInputSerializer,
         responses={
-            200: OpenApiResponse(description='Validation was successful'),
-            400 : OpenApiResponse(description='User want order too much quantity of component'),
-            404: OpenApiResponse(description='Code not found'),
-            401: OpenApiResponse(description='Unauthorized'),
-            403: OpenApiResponse(description='Permission denied'),
-
-        }
+            200: OpenApiResponse(description="Validation was successful"),
+            400: OpenApiResponse(description="User want order too much quantity of component"),
+            404: OpenApiResponse(description="Code not found"),
+            401: OpenApiResponse(description="Unauthorized"),
+            403: OpenApiResponse(description="Permission denied"),
+        },
     )
-
-
     def post(self, request):
         serializer = OrderComponentInputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        code = serializer.validated_data['code']
-        quantity = serializer.validated_data['quantity']
+        code = serializer.validated_data["code"]
+        quantity = serializer.validated_data["quantity"]
 
         try:
             validate_component(code, quantity)
-            return Response({
-                'message': 'OK'
-            }, status=200)
-
+            return Response({"message": "OK"}, status=200)
 
         except ValueError as e:
-            return Response({
-                'message': str(e)
-            },status=400)
-
+            return Response({"message": str(e)}, status=400)
 
         except NotFound as e:
-            return Response({
-                'message': str(e)
-            },status=404)
+            return Response({"message": str(e)}, status=404)
+
 
 class CreateListView(APIView):
-
     # only users with foreman role or higher are albe to create a list
     permission_classes = [IsAuthenticated, IsForemanOrHigher]
 
     @extend_schema(
-        summary='Create list with provided components',
+        summary="Create list with provided components",
         description="""
         This endpoint creates a new list with provided components and department.
         
@@ -144,47 +127,39 @@ class CreateListView(APIView):
         """,
         request=CreateListLPTInputSerializer,
         responses={
-            201: OpenApiResponse(description='Create list was successful'),
-            400 : OpenApiResponse(description='Validation error / code has been already on this list / dont enough quantity at stock'),
-            404: OpenApiResponse(description='Code not found'),
-            401: OpenApiResponse(description='Unauthorized'),
-            403: OpenApiResponse(description='Permission denied'),
-
-        }
+            201: OpenApiResponse(description="Create list was successful"),
+            400: OpenApiResponse(
+                description="Validation error / code has been already on this list / dont enough quantity at stock"
+            ),
+            404: OpenApiResponse(description="Code not found"),
+            401: OpenApiResponse(description="Unauthorized"),
+            403: OpenApiResponse(description="Permission denied"),
+        },
     )
-
-
-
     def post(self, request):
         serializer = CreateListLPTInputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        components = serializer.validated_data['components']
-        department = serializer.validated_data['department']
+        components = serializer.validated_data["components"]
+        department = serializer.validated_data["department"]
         user = request.user
-
 
         try:
             result = create_list(components, department, user)
             return Response(result, status=201)
 
         except ValueError as e:
-            return Response({
-                'message': str(e)
-            }, status=400)
+            return Response({"message": str(e)}, status=400)
 
         except NotFound as e:
-            return Response({
-                'message': str(e)
-            },status=404)
-
+            return Response({"message": str(e)}, status=404)
 
 
 class ReleaseComponentFromListView(APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
-        summary='Release component from list',
+        summary="Release component from list",
         description="""
         This endpoint is used to release provided component from provided list.
         
@@ -203,19 +178,20 @@ class ReleaseComponentFromListView(APIView):
         """,
         request=ReleaseComponentFromListSerializer,
         responses={
-            201 : OpenApiResponse(description='Correct release of the component from the list'),
-            400: OpenApiResponse(description='Validation error / Provided list is closed / Provided unique_code is not on provided list'),
-            404 : OpenApiResponse(description='List or component not found '),
-            401: OpenApiResponse(description='Unauthorized'),
-        }
+            201: OpenApiResponse(description="Correct release of the component from the list"),
+            400: OpenApiResponse(
+                description="Validation error / Provided list is closed / Provided unique_code is not on provided list"
+            ),
+            404: OpenApiResponse(description="List or component not found "),
+            401: OpenApiResponse(description="Unauthorized"),
+        },
     )
-
     def post(self, request):
         serializer = ReleaseComponentFromListSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        list_number = serializer.data['list_number']
-        unique_code = serializer.data['unique_code']
+        list_number = serializer.data["list_number"]
+        unique_code = serializer.data["unique_code"]
         user = request.user
 
         try:
@@ -223,21 +199,17 @@ class ReleaseComponentFromListView(APIView):
             return Response(result, status=201)
 
         except ValueError as e:
-            return Response({
-                'message': str(e)
-            },status=400)
+            return Response({"message": str(e)}, status=400)
 
         except NotFound as e:
-            return Response({
-                'message': str(e)
-            }, status=404)
+            return Response({"message": str(e)}, status=404)
+
 
 class ListLPTDetailsView(APIView):
-
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
-        summary='Shows details of provided list',
+        summary="Shows details of provided list",
         description="""
         Shows whole details about provided list such as who created this list, whether this list is closed or not,
         how many components are inside this list and how many of them has been released so far and more.
@@ -248,15 +220,12 @@ class ListLPTDetailsView(APIView):
         - Authentication required
         """,
         responses={
-            200 : OpenApiResponse(description='Details of provided list'),
-            400 : OpenApiResponse(description='Validations error'),
-            404:OpenApiResponse(description='List not found '),
-            401:OpenApiResponse(description='Unauthorized'),
-        }
-
+            200: OpenApiResponse(description="Details of provided list"),
+            400: OpenApiResponse(description="Validations error"),
+            404: OpenApiResponse(description="List not found "),
+            401: OpenApiResponse(description="Unauthorized"),
+        },
     )
-
-
     def get(self, request, list_number):
 
         try:
@@ -265,26 +234,17 @@ class ListLPTDetailsView(APIView):
             return Response(serializer.data, status=200)
 
         except NotFound as e:
-            return Response({
-                'message': str(e)
-            }, status=404)
+            return Response({"message": str(e)}, status=404)
 
         except ValueError as e:
-            return Response({
-                'message': str(e)
-            }, status=400)
-
-
-
+            return Response({"message": str(e)}, status=400)
 
 
 class PrintListView(APIView):
-
     permission_classes = [IsAuthenticated]
 
-
     @extend_schema(
-        summary='Print list',
+        summary="Print list",
         description="""
         This endpoint is used to print whole physical list on the warehouse
         
@@ -298,13 +258,12 @@ class PrintListView(APIView):
         - Authentication required
         """,
         responses={
-        200: OpenApiResponse(description='Print list on the warehouse'),
-        400 : OpenApiResponse(description='Validations error / Provided list is closed'),
-        404:OpenApiResponse(description='List not found '),
-        401:OpenApiResponse(description='Unauthorized'),
-        }
+            200: OpenApiResponse(description="Print list on the warehouse"),
+            400: OpenApiResponse(description="Validations error / Provided list is closed"),
+            404: OpenApiResponse(description="List not found "),
+            401: OpenApiResponse(description="Unauthorized"),
+        },
     )
-
     def get(self, request, list_number):
 
         try:
@@ -313,11 +272,7 @@ class PrintListView(APIView):
             return Response(serializer.data, status=200)
 
         except NotFound as e:
-            return Response({
-                'message': str(e)
-            }, status=404)
+            return Response({"message": str(e)}, status=404)
 
         except ValueError as e:
-            return Response({
-                'message': str(e)
-            }, status=400)
+            return Response({"message": str(e)}, status=400)

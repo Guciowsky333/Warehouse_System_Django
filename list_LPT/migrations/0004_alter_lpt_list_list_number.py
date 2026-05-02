@@ -6,15 +6,14 @@ import list_LPT.utils
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('list_LPT', '0003_rename_order_component_ordercomponent'),
+        ("list_LPT", "0003_rename_order_component_ordercomponent"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='lpt_list',
-            name='list_number',
+            model_name="lpt_list",
+            name="list_number",
             field=models.CharField(default=list_LPT.utils.generate_number_of_list, max_length=10, unique=True),
         ),
     ]
