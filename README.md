@@ -85,10 +85,13 @@ git clone https://github.com/Guciowsky333/Warehouse_System_Django
 
 # 2. Create .env file (see Environment Variables section below)
 
-# 3. Build and start Docker containers
+# 3. Install pre-commit hooks
+pre-commit install
+
+# 4. Build and start Docker containers
 docker-compose up --build
 
-# 4. Create a superuser (Optional)
+# 5. Create a superuser (Optional)
 docker-compose exec web python manage.py createsuperuser
 ```
 
