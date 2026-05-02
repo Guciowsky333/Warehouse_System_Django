@@ -16,6 +16,11 @@ from history.models import ComponentHistory
     ],
 )
 
+
+def test_faling():
+    assert 2==1
+
+
 def test_history_without_action(query_params, test_user, test_location,test_location2, test_component):
     """
     We create 3 ComponentHistory with our component, first we change it location,
