@@ -31,6 +31,11 @@ The project is covered by 107 tests written in pytest.
 - pytest  
 - pytest-django
 
+**Code Quality:**
+- ruff (linting & formatting)
+- pre-commit hooks
+- GitHub Actions (CI)
+
 ---
 
 ## ✨ Features
